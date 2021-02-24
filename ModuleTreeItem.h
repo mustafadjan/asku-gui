@@ -2,8 +2,8 @@
 
 #include "AbstractElemTreeItem.h"
 
-class RLKTreeItem;
 class ModuleTreeItemPrivate;
+class RLKTreeItem;
 
 class ModuleTreeItem : public AbstractElemTreeItem
 {
@@ -11,9 +11,10 @@ class ModuleTreeItem : public AbstractElemTreeItem
 
 public:
 
-    explicit ModuleTreeItem(quint32, const QString&, RLKTreeItem*);
+    explicit ModuleTreeItem(quint32, RLKTreeItem*);
 
     QVariant roleData(int) const override;
+    void setName(const QString& = QString());
     QVector<int> setData(const QVariant&) override;
 
 protected:

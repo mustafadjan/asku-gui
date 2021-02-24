@@ -2,7 +2,6 @@
 
 #include "AbstractSchemeTreeItem_p.h"
 #include <QVariant>
-#include <QSet>
 
 class TuneParamTreeItemPrivate : public AbstractSchemeTreeItemPrivate
 {
@@ -10,15 +9,20 @@ class TuneParamTreeItemPrivate : public AbstractSchemeTreeItemPrivate
 
 public:
 
+    qint64 time;
     QVariant innerData;
     QVariant outerData;
-    QPair<float, float> range{};
-    QSet<QString> valueSet;
-    bool dataChanged{false};
 
-    explicit TuneParamTreeItemPrivate(ItemType itemType, quint32 id, const QString& name,
+    QString description, unit;
+    QVariant defaultValue;
+    QPair<float, float> range{std::numeric_limits<float>::lowest(),
+                              std::numeric_limits<float>::max()};
+    QVector<QString> values;
+    bool saveStatus{false}, dataChanged{false};
+
+    explicit TuneParamTreeItemPrivate(quint32 id, const QString& name,
                                       AbstractSchemeTreeItem* parent):
-        AbstractSchemeTreeItemPrivate(itemType, id, name, parent)
+        AbstractSchemeTreeItemPrivate(id, name, parent)
     {
     }
 

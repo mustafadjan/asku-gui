@@ -3,7 +3,6 @@ INCLUDEPATH += $$PWD
 SOURCES += $$PWD/AbstractConditionalItem.cpp \
            $$PWD/AbstractElemTreeItem.cpp \
            $$PWD/AbstractSchemeTreeItem.cpp \
-           $$PWD/AbstractTreeItem.cpp \
            $$PWD/CtrlParamTableProxyModel.cpp \
            $$PWD/CtrlParamTableView.cpp \
            $$PWD/CtrlParamTreeItem.cpp \
@@ -32,8 +31,6 @@ HEADERS += $$PWD/AbstractConditionalItem.h\
            $$PWD/AbstractElemTreeItem_p.h \
            $$PWD/AbstractSchemeTreeItem.h \
            $$PWD/AbstractSchemeTreeItem_p.h \
-           $$PWD/AbstractTreeItem.h \
-           $$PWD/AbstractTreeItem_p.h \
            $$PWD/CtrlParamTableProxyModel.h \
            $$PWD/CtrlParamTableView.h \
            $$PWD/CtrlParamTreeItem.h \

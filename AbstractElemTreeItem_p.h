@@ -13,7 +13,7 @@ public:
 
     ElemData data;
 
-    explicit AbstractElemTreeItemPrivate(ItemType, quint32, const QString&, AbstractElemTreeItem*);
+    explicit AbstractElemTreeItemPrivate(quint32, const QString&, AbstractElemTreeItem*);
 
     bool hasChild(ItemType, bool = false) const;
 

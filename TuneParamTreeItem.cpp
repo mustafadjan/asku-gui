@@ -8,30 +8,14 @@
 
 TuneParamTreeItem::TuneParamTreeItem(quint32 id, const QString& name,
                                      AbstractSchemeTreeItem* parent):
-    AbstractSchemeTreeItem(*new TuneParamTreeItemPrivate(ItemType::TuneParam, id, name, parent))
+    AbstractSchemeTreeItem(*new TuneParamTreeItemPrivate(id, name, parent))
 {
+    d_func()->itemType = ItemType::TuneParam;
 }
 
-TuneParamTreeItem::TuneParamTreeItem(quint32 id, const QString& name, const QVariant& data,
-                                     AbstractSchemeTreeItem* parent):
-    TuneParamTreeItem(id, name, parent)
+TuneParamTreeItem::TuneParamTreeItem(const QString& name, AbstractSchemeTreeItem* parent):
+    TuneParamTreeItem(0, name, parent)
 {
-    d_func()->innerData = d_func()->outerData = data;
-}
-
-TuneParamTreeItem::TuneParamTreeItem(quint32 id, const QString& name, const QVariant& data,
-                                     const QPair<float, float>& range,
-                                     AbstractSchemeTreeItem* parent):
-    TuneParamTreeItem(id, name, data, parent)
-{
-    d_func()->range = range;
-}
-
-TuneParamTreeItem::TuneParamTreeItem(quint32 id, const QString& name, const QString& data,
-                                    const QSet<QString>& valueSet, AbstractSchemeTreeItem* parent):
-    TuneParamTreeItem(id, name, data, parent)
-{
-    d_func()->valueSet = valueSet;
 }
 
 int TuneParamTreeItem::columnCount() const
@@ -67,8 +51,8 @@ QVariant TuneParamTreeItem::roleData(int role) const
 QVector<int> TuneParamTreeItem::setData(const QVariant& data)
 {
     QVector<int> roles;
-    switch (data.type()) {
-        case QVariant::List:
+    switch (data.userType()) {
+        case QMetaType::QVariantList:
             {
                 auto dataList = data.toList();
                 if (dataList.size() == 2) {
@@ -84,10 +68,10 @@ QVector<int> TuneParamTreeItem::setData(const QVariant& data)
                 }
             }
             break;
-        case QVariant::Bool:
-        case QVariant::Double:
-        case QVariant::String:
-        case QVariant::Int:
+        case QMetaType::Float:
+        case QMetaType::QString:
+        case QMetaType::Int:
+        case QMetaType::Bool:
             qDebug() << __PRETTY_FUNCTION__ << data.type();
             d_func()->outerData = data;
             d_func()->dataChanged = true;
@@ -105,10 +89,61 @@ bool TuneParamTreeItem::isValid(ModelType modelType) const
     return modelType == ModelType::TuneParamTree;
 }
 
+void TuneParamTreeItem::setType(QMetaType::Type type)
+{
+    if (type != QMetaType::UnknownType && d_func()->innerData.canConvert(int(type))) {
+        d_func()->innerData.convert(int(type));
+        d_func()->outerData.convert(int(type));
+    }
+    else {
+        d_func()->innerData = d_func()->outerData = QVariant(QVariant::Type(type));
+    }
+}
+
+void TuneParamTreeItem::setUnit(const QString& unit)
+{
+    d_func()->unit = unit;
+}
+
+void TuneParamTreeItem::setSaveStatus(bool b)
+{
+    d_func()->saveStatus = b;
+}
+
+void TuneParamTreeItem::setMin(float min)
+{
+    d_func()->range.first = min;
+}
+
+void TuneParamTreeItem::setMax(float max)
+{
+    d_func()->range.second = max;
+}
+
+void TuneParamTreeItem::setValues(const QVector<QString>& values)
+{
+    d_func()->values = values;
+}
+
+void TuneParamTreeItem::setDescription(const QString& description)
+{
+    d_func()->description = description;
+}
+
+void TuneParamTreeItem::setDefault(const QVariant& defaultValue)
+{
+    int type = d_func()->innerData.userType();
+    if (defaultValue.canConvert(type)) {
+        d_func()->defaultValue = defaultValue;
+        d_func()->defaultValue.convert(type);
+        d_func()->innerData = d_func()->outerData = d_func()->defaultValue;
+    }
+}
+
 QWidget* TuneParamTreeItem::createEditor(QWidget* parent) const
 {
-    switch (d_func()->outerData.type()) {
-        case QVariant::Double:
+    switch (d_func()->outerData.userType()) {
+        case QMetaType::Float:
             {
                 auto editor = new QDoubleSpinBox(parent);
                 editor->setValue(d_func()->outerData.toDouble());
@@ -118,7 +153,7 @@ QWidget* TuneParamTreeItem::createEditor(QWidget* parent) const
                 }
                 return editor;
             }
-        case QVariant::String:
+        case QMetaType::QString:
             //if (d_func()->valueSet.isEmpty()) {
             {
                 auto editor = new QLineEdit(parent);
@@ -131,7 +166,7 @@ QWidget* TuneParamTreeItem::createEditor(QWidget* parent) const
             //    editor->setCurrentText(d_func()->outerData.toString());
             //    return editor;
             //}
-        case QVariant::Int:
+        case QMetaType::Int:
             {
                 auto editor = new QSpinBox(parent);
                 editor->setValue(d_func()->outerData.toInt());
@@ -141,6 +176,7 @@ QWidget* TuneParamTreeItem::createEditor(QWidget* parent) const
                 }
                 return editor;
             }
+        case QMetaType::Bool:
         //case QVariant::UserType:
         //    if (d_func()->outerData.userType() == 1) {
         //        auto editor = new QComboBox(parent);
@@ -161,7 +197,7 @@ QVariant TuneParamTreeItem::editorData(QWidget* editor) const
         case QVariant::Double:
             return qobject_cast<const QDoubleSpinBox*>(editor)->value();
         case QVariant::String:
-            if (d_func()->valueSet.isEmpty()) {
+            if (d_func()->values.isEmpty()) {
                 return qobject_cast<const QLineEdit*>(editor)->text();
             }
             else {

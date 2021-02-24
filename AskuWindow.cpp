@@ -7,13 +7,14 @@
 #include "PathComboBox.h"
 #include <QSplitter>
 #include <QLayout>
-#include <QJsonDocument>
+#include <QJsonValue>
+#include <QDebug>
 
 AskuWindow::AskuWindow(QWidget* parent):
     QWidget(parent)
 {
     auto sourceModel = new SchemeTreeModel(this);
-    connect(this, &AskuWindow::modulesData, sourceModel, &SchemeTreeModel::buildScheme);
+    connect(this, &AskuWindow::modulesData, sourceModel, &SchemeTreeModel::buildSchemes);
 
     auto elemTreeView = new ElemTreeView(sourceModel, this);
 
@@ -33,7 +34,11 @@ AskuWindow::AskuWindow(QWidget* parent):
     connect(elemTreeView, QOverload<const QModelIndex&>::of(&ElemTreeView::currentChanged),
             pathComboBox, &PathComboBox::updateItem);
     connect(pathComboBox, &PathComboBox::activated, elemTreeView, &ElemTreeView::setCurrentIndex);
-    connect(pathComboBox, SIGNAL(activated(const QModelIndex&)), elemTreeView, SLOT(setFocus()));
+    //connect(pathComboBox, &PathComboBox::activated, elemTreeView, [elemTreeView]
+    //{
+    //    qDebug() << __PRETTY_FUNCTION__;
+    //    elemTreeView->setFocus();
+    //});
 
     auto viewSplitter = new QSplitter(Qt::Horizontal, this);
     viewSplitter->setChildrenCollapsible(false);

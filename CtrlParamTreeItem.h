@@ -19,6 +19,10 @@ public:
     QVector<int> setData(const QVariant&) override; 
     bool isValid(ModelType) const override;
 
+    void setDescription(const QString&);
+    void setFormat(const QString&);
+    void setTemplates(const QHash<int, QString>);
+
 protected:
 
     ItemCondition condition() const override;

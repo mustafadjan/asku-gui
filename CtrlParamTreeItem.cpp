@@ -2,10 +2,11 @@
 #include "CtrlParamTreeItem_p.h"
 #include <QDateTime>
 
-CtrlParamTreeItem::CtrlParamTreeItem(quint32 id, const QString& data,
+CtrlParamTreeItem::CtrlParamTreeItem(quint32 id, const QString& name,
                                      AbstractSchemeTreeItem* parent):
-    AbstractSchemeTreeItem(*new CtrlParamTreeItemPrivate(ItemType::CtrlParam, id, data, parent))
+    AbstractSchemeTreeItem(*new CtrlParamTreeItemPrivate(id, name, parent))
 {
+    d_func()->itemType = ItemType::CtrlParam;
 }
 
 int CtrlParamTreeItem::columnCount() const
@@ -21,9 +22,9 @@ QVariant CtrlParamTreeItem::data(int column) const
         case 1:
             return d_func()->data.value;
         case 2:
-            return QDateTime::fromMSecsSinceEpoch(d_func()->time).toUTC().toString("hh:mm:ss");
+            return QDateTime::fromMSecsSinceEpoch(d_func()->data.time1).toUTC().toString("hh:mm:ss");
         case 3:
-            return QDateTime::fromMSecsSinceEpoch(d_func()->time2).toUTC().toString("hh:mm:ss");
+            return QDateTime::fromMSecsSinceEpoch(d_func()->data.time2).toUTC().toString("hh:mm:ss");
     }
 
     return QVariant();
@@ -63,15 +64,29 @@ bool CtrlParamTreeItem::isValid(ModelType modelType) const
     }
 }
 
+void CtrlParamTreeItem::setDescription(const QString& description)
+{
+    d_func()->description = description;
+}
+
+void CtrlParamTreeItem::setFormat(const QString& format)
+{
+    d_func()->format = format;
+}
+
+void CtrlParamTreeItem::setTemplates(const QHash<int, QString> templates)
+{
+    d_func()->templates = templates;
+}
+
 AbstractConditionalItem::ItemCondition CtrlParamTreeItem::condition() const
 {
     return static_cast<ItemCondition>(d_func()->data.condition);
 }
 
-CtrlParamTreeItemPrivate::CtrlParamTreeItemPrivate(ItemType itemType, quint32 id,
-                                                   const QString& name,
+CtrlParamTreeItemPrivate::CtrlParamTreeItemPrivate(quint32 id, const QString& name,
                                                    AbstractSchemeTreeItem* parent):
-    AbstractSchemeTreeItemPrivate(itemType, id, name, parent)
+    AbstractSchemeTreeItemPrivate(id, name, parent)
 {
     data.condition = static_cast<quint8>(AbstractConditionalItem::ItemCondition::Norm);
     data.touchedCondition = data.touchedValue = false;

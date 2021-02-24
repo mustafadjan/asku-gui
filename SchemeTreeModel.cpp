@@ -7,6 +7,7 @@
 #include "VoiTypes.h"
 #include "Enums.h"
 #include "TypesFunction.h"
+#include "RmoTypes.h"
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QJsonArray>
@@ -18,7 +19,7 @@
 #include "Loger.h"
 // todo: delete later
 
-#define sLogPrefix   "SchemeModel"
+#define sLogPrefix "SchemeTreeModel"
 
 class SchemeTreeModelPrivate
 {
@@ -32,17 +33,34 @@ class SchemeTreeModelPrivate
     {
         struct ModuleMappedItem
         {
-            operator ModuleTreeItem*() const { return module; }
+            ModuleMappedItem(ModuleTreeItem* module = nullptr):
+                module(module)
+            {
+            }
 
+            operator ModuleTreeItem*() const { return module; }
+            void clear() {
+                scheme = QJsonValue();
+                module->removeChilds();
+                elems.clear();
+                ctrlParams.clear();
+                tuneParams.clear();
+            }
+
+            QJsonValue scheme;
             ModuleTreeItem* module{nullptr};
             QHash<quint16, ElemTreeItem*> elems;
             QHash<quint32, CtrlParamTreeItem*> ctrlParams;
             QHash<quint32, TuneParamTreeItem*> tuneParams;
         };
 
+        RLKMappedItem(RLKTreeItem* rlk = nullptr):
+            rlk(rlk)
+        {
+        }
+
         operator RLKTreeItem*() const { return rlk; }
         ModuleMappedItem& operator[](quint32 moduleId) { return modules[moduleId]; }
-        //bool contains(quint32 moduleId) const { return modules.contains(moduleId); }
         QHash<quint32, ModuleMappedItem>::const_iterator constEnd() const {
             return modules.constEnd();
         }
@@ -53,6 +71,7 @@ class SchemeTreeModelPrivate
         RLKTreeItem* rlk{nullptr};
         QHash<quint32, ModuleMappedItem> modules;
     };
+    typedef RLKMappedItem::ModuleMappedItem ModuleMappedItem;
 
     QVector<RLKTreeItem*> rlkItems;
     QHash<quint32, RLKMappedItem> mappedItems;
@@ -60,29 +79,29 @@ class SchemeTreeModelPrivate
     explicit SchemeTreeModelPrivate(SchemeTreeModel* q): // todo: delete later
         q_ptr(q)
     {
-        mappedItems.constFind(0).value();
-
-        setupModelData();
-
-        fakeTimerElemCtrlParam = new QTimer(q);
-        fakeTimerRlkModule = new QTimer(q);
-
-        q_func()->connect(fakeTimerElemCtrlParam, &QTimer::timeout, q_func(), [this]
-        {
-            quint32 moduleId = static_cast<quint32>(EIdUser::ID_POI) << 8 | 1;
-            q_func()->updateElemsData(0, moduleId, generateRandomElemData());
-            q_func()->updateCtrlParamsData(0, moduleId, generateRandomCtrlParamData());
-        });
-
-        q_func()->connect(fakeTimerRlkModule, &QTimer::timeout, q_func(), [this]
-        {
-            q_func()->updateRlkData(generateRandomRlkModuleData(0));
-            q_func()->updateModuleData(0,
-                      generateRandomRlkModuleData(static_cast<quint32>(EIdUser::ID_POI) << 8 | 1));
-        });
-
-        //fakeTimerElemCtrlParam->start(5000);
-        fakeTimerRlkModule->start(1000);
+        //mappedItems.constFind(0).value(); // ??
+        //
+        //setupModelData();
+        //
+        //fakeTimerElemCtrlParam = new QTimer(q);
+        //fakeTimerRlkModule = new QTimer(q);
+        //
+        //q_func()->connect(fakeTimerElemCtrlParam, &QTimer::timeout, q_func(), [this]
+        //{
+        //    quint32 moduleId = static_cast<quint32>(EIdUser::ID_POI) << 8 | 1;
+        //    q_func()->updateElemsData(0, moduleId, generateRandomElemData());
+        //    q_func()->updateCtrlParamsData(0, moduleId, generateRandomCtrlParamData());
+        //});
+        //
+        //q_func()->connect(fakeTimerRlkModule, &QTimer::timeout, q_func(), [this]
+        //{
+        //    q_func()->updateRlkData(generateRandomRlkModuleData(0));
+        //    q_func()->updateModuleData(0,
+        //              generateRandomRlkModuleData(static_cast<quint32>(EIdUser::ID_POI) << 8 | 1));
+        //});
+        //
+        ////fakeTimerElemCtrlParam->start(5000);
+        //fakeTimerRlkModule->start(1000);
     }
 
     void setupModelData() // todo: delete later
@@ -92,9 +111,11 @@ class SchemeTreeModelPrivate
         auto rlk = new RLKTreeItem(0);
         rlkItems.append(rlk);
         mappedItems[0].rlk = rlk;
-        auto elem0 = new ModuleTreeItem(static_cast<quint32>(EIdUser::ID_OTS) << 8 | 0, "АЛМАЗ", rlk);
+        auto elem0 = new ModuleTreeItem(static_cast<quint32>(EIdUser::ID_OTS) << 8 | 0, rlk);
+        elem0->setName("АЛМАЗ");
         //auto typeItem = moduleTypeItem(ModuleType::POI);
-        auto elem00 = new ModuleTreeItem(static_cast<quint32>(EIdUser::ID_POI) << 8 | 1, "РЛС", rlk);
+        auto elem00 = new ModuleTreeItem(static_cast<quint32>(EIdUser::ID_POI) << 8 | 1, rlk);
+        elem00->setName("РЛС");
         mappedItems[0][static_cast<quint32>(EIdUser::ID_POI) << 8 | 1].module = elem00;
         auto elem004 = new ElemTreeItem(0, "Элемент_1", elem00);
         auto elem005 = new ElemTreeItem(1, "Элемент_2", elem004);
@@ -110,21 +131,21 @@ class SchemeTreeModelPrivate
         auto ctrlParam0020 = new CtrlParamTreeItem(7, "Изм. мощность 6", elem002);
         auto ctrlParam0021 = new CtrlParamTreeItem(8, "Изм. мощность 7", elem002);
         auto elem003 = new CtrlParamTreeItem(9, "Изм. мощность 8", elem00);
-        auto elem1 = new ModuleTreeItem(static_cast<quint32>(EIdUser::ID_POI) << 8 | 2, "ЛЭМЗ", rlk);
+        auto elem1 = new ModuleTreeItem(static_cast<quint32>(EIdUser::ID_POI) << 8 | 2, rlk);
+        elem1->setName("ЛЭМЗ");
         auto elem10 = new ElemTreeItem(0, "Тепловизор", elem1);
         auto elem103 = new ElemTreeItem(2, "Элемент_2", elem10);
-        auto tuneParam100 = new TuneParamTreeItem(0, "Тест НП 1", 5, {0, 10}, elem10);
+        auto tuneParam100 = new TuneParamTreeItem(0, "Тест НП 1", elem10);
         auto ctrlParam101 = new CtrlParamTreeItem(0, "Тест КП 1", elem10);
-        auto tuneParam102 = new TuneParamTreeItem(1, "Тест НП 3", "5.6",
-                                                  {"2.8", "5.6", "7.0", "9.1"}, elem10);
-        auto tuneParam103 = new TuneParamTreeItem(2, "Группа НП 1", elem10);
-        auto tuneParam1000 = new TuneParamTreeItem(3, "Тест НП 4", 6.1, {0.1f, 11.f}, tuneParam103);
-        auto tuneParam1001 = new TuneParamTreeItem(4, "Тест НП 5", 7, {0, 12}, tuneParam103);
+        auto tuneParam102 = new TuneParamTreeItem(1, "Тест НП 3", elem10);
+        auto tuneParam103 = new TuneParamTreeItem("Группа НП 1", elem10);
+        auto tuneParam1000 = new TuneParamTreeItem(2, "Тест НП 4", tuneParam103);
+        auto tuneParam1001 = new TuneParamTreeItem(3, "Тест НП 5", tuneParam103);
         auto elem11 = new ElemTreeItem(1, "СКК", elem1);
-        auto tuneParam110 = new TuneParamTreeItem(3, "Тест НП 2", false, elem11);
-        auto tuneParam111 = new TuneParamTreeItem(2, "Тест НП 3", true, elem11);
-        auto tuneParam112 = new TuneParamTreeItem(0, "Тест НП 4", false, elem11);
-        auto tuneParam113 = new TuneParamTreeItem(1, "Тест НП 5", true, elem11);
+        auto tuneParam110 = new TuneParamTreeItem(4, "Тест НП 2", elem11);
+        auto tuneParam111 = new TuneParamTreeItem(5, "Тест НП 3", elem11);
+        auto tuneParam112 = new TuneParamTreeItem(6, "Тест НП 4", elem11);
+        auto tuneParam113 = new TuneParamTreeItem(7, "Тест НП 5", elem11);
         auto elem113 = new ElemTreeItem(3, "Элемент_3", elem11);
         auto elem114 = new ElemTreeItem(4, "Элемент_4", elem113);
     }
@@ -183,7 +204,7 @@ class SchemeTreeModelPrivate
 
         for (quint32 i = 0; i < 10; ++i) {
             CtrlParamData ctrlParamData;
-            ctrlParamData.time = currentTimeUtc;
+            ctrlParamData.time1 = currentTimeUtc;
             ctrlParamData.condition = static_cast<quint8>(QRandomGenerator::system()->
                  bounded(static_cast<int>(AbstractConditionalItem::ItemCondition::Uncontrol) + 1));
             ctrlParamData.value = QString::number(QRandomGenerator::system()->bounded(100));
@@ -196,7 +217,19 @@ class SchemeTreeModelPrivate
     template<typename T1, typename T2>
     void updateItemsData(const T1&, const T2&) const;
     AbstractSchemeTreeItem* item(const QModelIndex&) const;
-    QString makeModuleName(quint32) const;
+    QModelIndex index(AbstractSchemeTreeItem*) const;
+
+    QHash<quint32, RLKMappedItem>::iterator insertRlk(quint32);
+    QHash<quint32, ModuleMappedItem>::iterator insertModule(quint32, RLKMappedItem&);
+
+    template<typename T1, typename T2>
+    void recvValue(const QJsonValue&, T1&, T2*,
+                   void (SchemeTreeModelPrivate::*recv)(const QJsonObject&, T1&, T2*));
+    void recvElem(const QJsonObject&, ModuleMappedItem&, AbstractElemTreeItem*);
+    void recvCtrlParam(const QJsonObject&, QHash<quint32, CtrlParamTreeItem*>&,
+                       AbstractSchemeTreeItem*);
+    void recvTuneParam(const QJsonObject&, QHash<quint32, TuneParamTreeItem*>&,
+                       AbstractSchemeTreeItem*);
 
 };
 
@@ -211,10 +244,8 @@ void SchemeTreeModelPrivate::updateItemsData(const T1& items, const T2& data) co
         if (itItem != items.constEnd()) {
             AbstractSchemeTreeItem* item = itItem.value();
             auto roles = item->setData(QVariant::fromValue(it.value()));
-            int row = item->parentItem() ? item->row() :
-                      rlkItems.indexOf(dynamic_cast<RLKTreeItem*>(item));
-            auto index = q_func()->createIndex(row, 0, item);
-            if (!roles.isEmpty() && index.isValid()) {
+            if (!roles.isEmpty()) {
+                auto index = this->index(item);
                 emit q_func()->constDataChanged(index, index, roles);
             }
         }
@@ -226,9 +257,185 @@ AbstractSchemeTreeItem* SchemeTreeModelPrivate::item(const QModelIndex& index) c
     return index.isValid() ? static_cast<AbstractSchemeTreeItem*>(index.internalPointer()) : nullptr;
 }
 
-QString SchemeTreeModelPrivate::makeModuleName(quint32 id) const
+QModelIndex SchemeTreeModelPrivate::index(AbstractSchemeTreeItem* item) const
 {
-    return QString("%1 %2").arg(idToStr(static_cast<EIdUser>(id & 0xffffff))).arg(id >> 24);
+    int row = item->parentItem() ? item->row() : rlkItems.indexOf(dynamic_cast<RLKTreeItem*>(item));
+    return q_func()->createIndex(row, 0, item);
+}
+
+QHash<quint32, SchemeTreeModelPrivate::RLKMappedItem>::iterator
+SchemeTreeModelPrivate::insertRlk(quint32 rlkId)
+{
+    int size = q_func()->rowCount();
+    q_func()->beginInsertRows(QModelIndex(), size, size);
+    auto rlkItem = new RLKTreeItem(rlkId);
+    rlkItems.append(rlkItem);
+    auto it = mappedItems.insert(rlkId, {rlkItem});
+    q_func()->endInsertRows();
+    return it;
+}
+
+QHash<quint32, SchemeTreeModelPrivate::ModuleMappedItem>::iterator
+SchemeTreeModelPrivate::insertModule(quint32 moduleId, RLKMappedItem& mappedItem)
+{
+    auto index = this->index(mappedItem);
+    int size = q_func()->rowCount(index);
+    q_func()->beginInsertRows(index, size, size);
+    auto moduleItem = new ModuleTreeItem(moduleId, mappedItem);
+    auto it = mappedItem.modules.insert(moduleId, {moduleItem});
+    q_func()->endInsertRows();
+    return it;
+}
+
+template<typename T1, typename T2>
+void SchemeTreeModelPrivate::recvValue(const QJsonValue& jsonValue, T1& items, T2* parentItem,
+                                void (SchemeTreeModelPrivate::*recv)(const QJsonObject&, T1&, T2*))
+{
+    if (jsonValue.isArray()) {
+        for (const auto jsonValueRef : jsonValue.toArray()) {
+            (this->*recv)(jsonValueRef.toObject(), items, parentItem);
+        }
+    }
+    else if (jsonValue.isObject()) {
+        (this->*recv)(jsonValue.toObject(), items, parentItem);
+    }
+}
+
+void SchemeTreeModelPrivate::recvElem(const QJsonObject& jsonObject,
+                                      ModuleMappedItem& moduleMappedItem,
+                                      AbstractElemTreeItem* parent)
+{
+    if (parent) {
+        AbstractElemTreeItem* item = nullptr;
+        const auto& jsonIDElem = jsonObject["IDElem"];
+        if (jsonIDElem.isDouble()) {
+            int size = parent->childCount();
+            q_func()->beginInsertRows(index(parent), size, size);
+            quint16 ID = static_cast<quint16>(jsonIDElem.toInt());
+            item = moduleMappedItem.elems[ID] =
+            new ElemTreeItem(ID, jsonObject["Name"].toString(), parent);
+            q_func()->endInsertRows();
+        }
+        else { // элемент без номера
+            item = parent;
+        }
+
+        recvValue(jsonObject["Elements"], moduleMappedItem, item,
+                  &SchemeTreeModelPrivate::recvElem);
+
+        recvValue(jsonObject["Params"], moduleMappedItem.ctrlParams,
+                  static_cast<AbstractSchemeTreeItem*>(item),
+                  &SchemeTreeModelPrivate::recvCtrlParam);
+
+        recvValue(jsonObject["ConfigParam"], moduleMappedItem.tuneParams,
+                  static_cast<AbstractSchemeTreeItem*>(item),
+                  &SchemeTreeModelPrivate::recvTuneParam);
+    }
+}
+
+void SchemeTreeModelPrivate::recvCtrlParam(const QJsonObject& jsonObject,
+                                           QHash<quint32, CtrlParamTreeItem*>& ctrlParamItems,
+                                           AbstractSchemeTreeItem* parent)
+{
+    if (parent) {
+        int size = parent->childCount();
+        q_func()->beginInsertRows(index(parent), size, size);
+
+        auto item = new CtrlParamTreeItem(static_cast<quint32>(jsonObject["IDParam"].toDouble()),
+                                          jsonObject["Name"].toString(), parent);
+        item->setDescription(jsonObject["Description"].toString());
+
+        if (jsonObject.contains("Params")) {
+            recvValue(jsonObject["Params"], ctrlParamItems,
+                      static_cast<AbstractSchemeTreeItem*>(item),
+                      &SchemeTreeModelPrivate::recvCtrlParam);
+        }
+        else {
+            ctrlParamItems[item->id()] = item;
+            item->setFormat(jsonObject["Format"].toString());
+            QHash<int, QString> templates;
+            auto recvTemplate = [&templates] (const QJsonObject& jsonTemplate) {
+                const auto& jsonValue = jsonTemplate["Value"];
+                if (jsonValue.isDouble()) {
+                    templates[jsonValue.toInt()] = jsonTemplate["Text"].toString();
+                }
+                else if (jsonValue.isBool()) {
+                    templates[jsonValue.toBool()] = jsonTemplate["Text"].toString();
+                }
+            };
+            const auto& jsonTemplates = jsonObject["Template"];
+            if (jsonTemplates.isArray()) {
+                for (const auto jsonTemplate : jsonTemplates.toArray()) {
+                    recvTemplate(jsonTemplate.toObject());
+                }
+            }
+            else if (jsonTemplates.isObject()) {
+                recvTemplate(jsonTemplates.toObject());
+            }
+            item->setTemplates(templates);
+        }
+
+        q_func()->endInsertRows();
+    }
+}
+
+void SchemeTreeModelPrivate::recvTuneParam(const QJsonObject& jsonObject,
+                                           QHash<quint32, TuneParamTreeItem*>& tuneParamItems,
+                                           AbstractSchemeTreeItem* parent)
+{
+    if (parent) {
+        int size = parent->childCount();
+        q_func()->beginInsertRows(index(parent), size, size);
+
+        TuneParamTreeItem* item = nullptr;
+        const auto& jsonIDConfigParam = jsonObject["IDConfigParam"];
+        if (jsonIDConfigParam.isDouble()) {
+            quint32 ID = static_cast<quint32>(jsonIDConfigParam.toDouble());
+            item = tuneParamItems[ID] =
+            new TuneParamTreeItem(ID, jsonObject["NameConfig"].toString(), parent);
+            switch (jsonObject["TypeConfig"].toInt()) {
+                case Float:
+                    item->setType(QMetaType::Float);
+                    break;
+                case String:
+                    item->setType(QMetaType::QString);
+                    break;
+                case Int32:
+                    item->setType(QMetaType::Int);
+                    break;
+                case Bool:
+                    item->setType(QMetaType::Bool);
+                    break;
+                default:
+                    item->setType(QMetaType::UnknownType);
+            }
+            item->setSaveStatus(jsonObject["IsSave"].toBool());
+            item->setDefault(jsonObject["Default"].toVariant());
+            if (jsonObject.contains("Values")) {
+                const auto& jsonValues = jsonObject["Values"];
+                QVector<QString> values;
+                if (jsonValues.isArray()) {
+                    for (const auto jsonValueRef : jsonValues.toArray()) {
+                        values.append(jsonValueRef.toString());
+                    }
+                }
+                else if (jsonValues.isString()) {
+                    values.append(jsonValues.toString());
+                }
+                item->setValues(values);
+            }
+            else {
+                item->setMin(static_cast<float>(jsonObject["RangeMin"].toDouble()));
+                item->setMax(static_cast<float>(jsonObject["RangeMax"].toDouble()));
+            }
+        }
+        else { // группа НП
+            item = new TuneParamTreeItem(jsonObject["NameConfig"].toString(), parent);
+        }
+        item->setDescription(jsonObject["Description"].toString());
+
+        q_func()->endInsertRows();
+    }
 }
 
 SchemeTreeModel::SchemeTreeModel(QObject* parent):
@@ -314,255 +521,33 @@ QVariant SchemeTreeModel::data(const QModelIndex& index, int role) const
     return QVariant();
 }
 
-void SchemeTreeModel::buildScheme(quint32 rlkId, const QHash<quint32, QJsonDocument>& jsonDocuments)
+void SchemeTreeModel::buildSchemes(quint32 rlkId, const QHash<quint32, QJsonValue>& jsonSchemes)
 {
-    /*MY_LOG_DEB("qwer");
-    auto it = d_func()->mappedItems.constFind(rlkId);
-    if (it == d_func()->mappedItems.constEnd()) {
-        auto rlkItem = new RLKTreeItem(rlkId);
-        d_func()->rlkItems.append(rlkItem);
-        d_func()->mappedItems[rlkId].rlk = rlkItem;
+    auto it = d_func()->mappedItems.find(rlkId);
+    if (it == d_func()->mappedItems.end()) {
+        it = d_func()->insertRlk(rlkId);
     }
-    else {
+    auto& rlkMappedItem = it.value();
 
-    }
+    auto itEnd = jsonSchemes.constEnd();
+    for (auto schemeIt = jsonSchemes.constBegin(); schemeIt != itEnd; ++schemeIt) {
+        quint32 moduleId = schemeIt.key();
 
-
-
-    auto recvElem = [] (const QJsonObject& jsonObject)
-    {
-        quint16 ID;
-        if (jsonObject.contains("IDElem") && jsonObject["IDElem"].isDouble()) {
-            int IDtmp = jsonObject["IDElem"].toInt();
-            if (IDtmp)
-            ID = static_cast<quint16>(jsonObject["IDElem"].toInt());
+        auto it = rlkMappedItem.modules.find(moduleId);
+        if (it == rlkMappedItem.modules.end()) {
+            it = d_func()->insertModule(moduleId, rlkMappedItem);
         }
-        else { // элемент без номера
+        auto& moduleMappedItem = it.value();
 
-        }
-        if (ID < 0) { // элемент без номера
-            if (mElem.contains(nID)) { // один элемент без номера уже был, больше нельзя
-            ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                            "пришло более одного элемента без номера").
-                          arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack).
-                          arg(o_HeaderRecv.n_TypePack, 0, 16), ERR_COLOR);
-            return;
-            }
-          if(oObj.contains("Elems")) {
-            ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                              "в элемент без номера не могут входить другие элементы").
-                            arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack).
-                            arg(o_HeaderRecv.n_TypePack, 0, 16), ERR_COLOR);
-            return;
-            }
-          if(!oObj.contains("Params") && !oObj.contains("ConfigParam")) {
-            ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                              "элемент без номера должен содержать контролируемые и/или настраиваемые параметры\n"
-                              "В пришедшем сообщении элемент без номера не содержит ни контролируемых, ни настраиваемых параметров").
-                              arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack).
-                              arg(o_HeaderRecv.n_TypePack, 0, 16), ERR_COLOR);
-            return;
-            }
-        }
-        else {
-        if(nID < 0 || nID > 0xFFFF) {
-          ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                            "неверный номер элемента = %6, возможные значения от 0 до %7").
-                         arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-                        .arg(o_HeaderRecv.n_TypePack, 0, 16).arg(nID).arg(0xFFFF), ERR_COLOR);
-          return;
-          }
-          }
-        OElementSheme* pElem = new OElementSheme;
-        if(!pElem) return;
-        pElem->o_State.n_ID = nID;
-        if(nID == -1) pElem->n_Time = -1;
-
-        vElement.push_back(pElem);
-        mElem.insert(nID, pElem);
-        if(oObj.contains("Name") && oObj["Name"].isString()) pElem->s_Name = oObj["Name"].toString();
-        else {
-          if(nID != -1) {
-            ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                           "отсутствует (или неверный формат) названия элемента № %6, поставлено значение Элемент_%7").
-                         arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-                        .arg(o_HeaderRecv.n_TypePack, 0, 16).arg(nID).arg(nID), ERR_COLOR);
-            pElem->s_Name = tr("Элемент_%1").arg(nID);
-            }
-          else pElem->s_Name = tr("Настройки модуля");
-          }
-        if(oObj.contains("ShortName") && oObj["ShortName"].isString()) pElem->s_ShortName = oObj["ShortName"].toString();
-        if(oObj.contains("Params")) {
-          if(oObj["Params"].isArray()) { // несколько параметров
-            QJsonArray oArr = oObj["Params"].toArray();
-            int nParamCnt = oArr.size();
-            if(nParamCnt == 0) {
-              ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                             "передано неверное количество КП в составе элемента %6 (%7): "
-                              "%8 (возможные значения > 0)").
-                        arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack).
-                        arg(o_HeaderRecv.n_TypePack, 0, 16).arg(pElem->s_Name).
-                        arg(nID).arg(nParamCnt), ERR_COLOR);
-              }
-            for(int i = 0; i < nParamCnt; i++) {
-              if(oArr.at(i).isObject())  RecvOneParam(oArr.at(i).toObject(), pElem->v_Params, mParam);
-              else
-                ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                               "неверный формат данных о КП № %6 элемента %7 (%8) в составе модуля").
-                          arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack).
-                          arg(o_HeaderRecv.n_TypePack, 0, 16).arg(i).arg(pElem->s_Name).
-                          arg(nID), ERR_COLOR);
-              }
-            } // несколько параметров
-          else if(oObj["Params"].isObject()) RecvOneParam(oObj["Params"].toObject(), pElem->v_Params, mParam);
-          else { // ошибка
-            ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: сообщение %4 (0x%5) "
-                         "о КП элемента %6 (%7) не является форматом Json").
-                       arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-                      .arg(o_HeaderRecv.n_TypePack, 0, 16).arg(pElem->s_Name).
-                      arg(nID), ERR_COLOR);
-            } // ошибка
-          } // есть данные о КП
-        QString sCP("ConfigParam");
-        if(oObj.contains(sCP)) {
-          if(oObj[sCP].isArray()) { // несколько параметров
-            QJsonArray oArr = oObj[sCP].toArray();
-            int nParamCnt = oArr.size();
-            if(nParamCnt == 0) {
-              ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                             "передано неверное количество НП в составе элемента %6 (%7): "
-                             "%8 (возможные значения > 0)").
-                        arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack).
-                        arg(o_HeaderRecv.n_TypePack, 0, 16).arg(pElem->s_Name).
-                        arg(nID).arg(nParamCnt), ERR_COLOR);
-              }
-            for(int i = 0; i < nParamCnt; i++) {
-              if(oArr.at(i).isObject())  RecvOneConfParam(oArr.at(i).toObject(), pElem->v_ConfParams, mConfParam);
-              else
-                ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                               "неверный формат данных о НП № %6 элемента %7 (%8) в составе модуля").
-                          arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack).
-                          arg(o_HeaderRecv.n_TypePack, 0, 16).arg(i).arg(pElem->s_Name).
-                          arg(nID), ERR_COLOR);
-              }
-            } // несколько параметров
-          else if(oObj[sCP].isObject()) RecvOneConfParam(oObj[sCP].toObject(), pElem->v_ConfParams, mConfParam);
-          else { // ошибка
-            ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: сообщение %4 (0x%5) "
-                         "о НП элемента %6 (%7) не является форматом Json").
-                      arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack).
-                      arg(o_HeaderRecv.n_TypePack, 0, 16).arg(pElem->s_Name).
-                      arg(nID), ERR_COLOR);
-            } // ошибка
-          } // есть данные о НП
-        if(oObj.contains("Elements")) { // есть данные о входящих элементах
-          if(oObj["Elements"].isArray()) { // содержит несколько элементов
-            QJsonArray oArr = oObj["Elements"].toArray();
-            int nElemCnt = oArr.size();
-            if(nElemCnt == 0) {
-              ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                               "передано неверное количество элементов в составе элемента %6 (%7): "
-                                "%8 (возможные значения > 0)").
-                           arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-                          .arg(o_HeaderRecv.n_TypePack, 0, 16).arg(pElem->s_Name).
-                          arg(nID).arg(nElemCnt), ERR_COLOR);
-              }
-            for(int i = 0; i < nElemCnt; i++) {
-              if(oArr.at(i).isObject())  RecvOneElem(oArr.at(i).toObject(), pElem->v_Elements, mElem, mParam, mConfParam);
-              else
-               ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                               "неверный формат данных о элементе № %6 элемента %7 (%8) в составе модуля").
-                             arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-                            .arg(o_HeaderRecv.n_TypePack, 0, 16).arg(i).arg(pElem->s_Name).
-                            arg(nID), ERR_COLOR);
-              }
-            } // содержит несколько элементов
-          else if(oObj["Elements"].isObject()) { // содержит один элемент
-            RecvOneElem(oObj["Elements"].toObject(), pElem->v_Elements, mElem, mParam, mConfParam);
-            }
-          else { // ошибка
-            ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: сообщение %4 (0x%5) "
-                           "о входящих в состав элемента %6 (%7) подэлементах не является форматом Json").
-                         arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-                        .arg(o_HeaderRecv.n_TypePack, 0, 16).arg(pElem->s_Name).
-                        arg(nID), ERR_COLOR);
-            }
-          } // есть данные о входящих элементах
-    };
-
-    auto itEnd = jsonDocuments.constEnd();
-    for (auto it = jsonDocuments.constBegin(); it != itEnd; ++it) {
-        const auto& jsonDocument = it.value();
-        if (jsonDocument.isArray()) {
-            const auto jsonArray = jsonDocument.array();
-            int jsonSize = jsonArray.size();
-
+        const auto& moduleScheme = schemeIt.value();
+        if (moduleMappedItem.scheme != moduleScheme) { // схема изменилась
+            moduleMappedItem.clear();
+            moduleMappedItem.scheme = moduleScheme;
+            d_func()->recvValue(schemeIt.value(), moduleMappedItem,
+                                static_cast<AbstractElemTreeItem*>(moduleMappedItem.module),
+                                &SchemeTreeModelPrivate::recvElem);
         }
     }
-
-    QJsonDocument oJsonDocument = QJsonDocument::fromJson(QByteArray(sMess, o_HeaderRecv.n_SizeData));
-    if(oJsonDocument.isNull()) {
-      oJsonDocument = QJsonDocument::fromJson(QByteArray(sMess, o_HeaderRecv.n_SizeData - 1));
-      if(oJsonDocument.isNull()) {
-        ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: сообщение %4 (0x%5) "
-                   "не является форматом Json").
-               arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-              .arg(o_HeaderRecv.n_TypePack, 0, 16), ERR_COLOR);
-        return;
-        }
-      }
-    int nElemCnt = 0;
-    QVector<OElementSheme*> oSheme;
-    QMap<int, OElementSheme*> mElem;
-    QMap<int, OParamSheme*> mParam;
-    QMap<int, OConfParamSheme*> mConfParam;
-    if(oJsonDocument.isArray()) { // несколько верхних элементов
-      QJsonArray oArr = oJsonDocument.array();
-      nElemCnt = oArr.size();
-      if(nElemCnt == 0) {
-        ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                     "передано неверное количество элементов в составе модуля: %6 (возможные значения > 0)").
-                 arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-                .arg(o_HeaderRecv.n_TypePack, 0, 16).arg(nElemCnt), ERR_COLOR);
-        emit SigSheme(oSheme, mElem, mParam, mConfParam);
-        return;
-        }
-      for(int i = 0; i < nElemCnt; i++) {
-        if(oArr.at(i).isObject())  RecvOneElem(oArr.at(i).toObject(), oSheme, mElem, mParam, mConfParam);
-        else
-          ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: в сообщении %4 (0x%5) "
-                       "неверный формат данных об элементе № %6 в составе модуля").
-                   arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-                  .arg(o_HeaderRecv.n_TypePack, 0, 16).arg(i), ERR_COLOR);
-          }
-        }
-    else if(oJsonDocument.isObject()) RecvOneElem(oJsonDocument.object(), oSheme, mElem, mParam, mConfParam); // один элемент в составе модуля
-    else {
-      ToLogFile(QString("Ошибка приема данных от модуля %1 (0x%2)_%3: сообщение %4 (0x%5) "
-                   "не является форматом Json").
-               arg(IDToStr(n_ID)).arg(n_ID, 0, 16).arg(n_IdxID).arg(o_HeaderRecv.n_TypePack)
-              .arg(o_HeaderRecv.n_TypePack, 0, 16), ERR_COLOR);
-      return;
-      } */
-
-    //auto moduleItem = d->moduleItem(moduleId);
-    //int i = d->rlkItems.indexOf(moduleItem);
-    //if (moduleItem) { // удаление старой схемы
-    //    delete moduleItem;
-    //}
-    //
-    //moduleItem = new ModuleTreeItem(moduleId, d->makeModuleName(moduleId));
-    //if (jsonDocument.isObject()) {
-    //    auto jsonObject = jsonDocument.object();
-    //}
-    //else if (jsonDocument.isArray()) {
-    //    auto jsonArray = jsonDocument.array();
-    //    for (auto jsonValue : jsonArray) {
-    //        //jsonValue.
-    //    }
-    //}
-
-    //d->moduleItems[moduleId] =
 }
 
 void SchemeTreeModel::updateRlkData(const QHash<quint32, Pack0x24>& data) const

@@ -9,9 +9,11 @@ class CtrlParamTreeItemPrivate : public AbstractSchemeTreeItemPrivate
 
 public:
 
-    qint64 time2{0};
     CtrlParamData data;
 
-    explicit CtrlParamTreeItemPrivate(ItemType, quint32, const QString&, AbstractSchemeTreeItem*);
+    QString description, format;
+    QHash<int, QString> templates;
+
+    explicit CtrlParamTreeItemPrivate(quint32, const QString&, AbstractSchemeTreeItem*);
 
 };

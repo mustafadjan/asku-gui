@@ -1,6 +1,5 @@
 #include "ElemTreeProxyModel.h"
 #include "AbstractSchemeTreeItem.h"
-#include "ModuleTypeTreeItem.h"
 
 ElemTreeProxyModel::ElemTreeProxyModel(QAbstractItemModel* sourceModel, QObject* parent):
     SchemeBaseProxyModel(ModelType::ElemTree, sourceModel, parent)

@@ -15,8 +15,7 @@ public:
     quint8 hasTP:1;
     quint8 TP:1;
     quint16 mode;
-    quint16 numVOI;
 
-    explicit ModuleTreeItemPrivate(ItemType, quint32, const QString&, RLKTreeItem*);
+    explicit ModuleTreeItemPrivate(quint32, RLKTreeItem*);
 
 };

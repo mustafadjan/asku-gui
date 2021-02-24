@@ -10,7 +10,7 @@ public:
 
     explicit ElemTreeView(QAbstractItemModel*, QWidget* = nullptr);
 
-    QAbstractItemModel* model() const;
+    //QAbstractItemModel* model() const;
 
 protected:
 

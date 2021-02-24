@@ -1,6 +1,6 @@
 #pragma once
 
-#include "AbstractTreeItem.h"
+#include <QMetaType>
 
 namespace Qt {
     enum // ItemDataRole
@@ -11,7 +11,11 @@ namespace Qt {
         FullPathRole = UserRole + 1,
         IDRole,
         TimeRole,
+        NameRole,
         IsModuleRole,
+        DescriptionRole,
+        FormatRole,
+        TemplateRole,
         ResetTPRole,
         ElemFlagsRole
     };
@@ -38,37 +42,36 @@ Q_DECLARE_METATYPE(ItemType)
 
 class AbstractSchemeTreeItemPrivate;
 
-class AbstractSchemeTreeItem : public AbstractTreeItem
+class AbstractSchemeTreeItem
 {
     Q_DECLARE_PRIVATE_D(d, AbstractSchemeTreeItem)
 
+    friend class SchemeTreeModelPrivate;
 public:
 
-    //AbstractSchemeTreeItem* child(int) const;
-    //bool hasChild() const;
-    //int childCount() const;
-    //virtual int columnCount() const = 0;
-    //virtual QVariant data(int) const = 0;
-    //virtual QVariant roleData(int) const = 0;
-    //virtual QVector<int> setData(const QVariant&) = 0;
-    //int row() const;
-    //AbstractSchemeTreeItem* parentItem() const;
-    //AbstractSchemeTreeItem* rootItem() const;
     AbstractSchemeTreeItem* child(int) const;
+    bool hasChild() const;
+    int childCount() const;
     int row() const;
     AbstractSchemeTreeItem* parentItem() const;
     AbstractSchemeTreeItem* rootItem() const;
     ItemType type() const;
     quint32 id() const;
+    void setName(const QString&);
+    void removeChilds();
 
     virtual QVariant roleData(int) const;
+
+    virtual int columnCount() const = 0;
+    virtual QVariant data(int) const = 0;
     virtual bool isValid(ModelType) const = 0;
+    virtual QVector<int> setData(const QVariant&) = 0;
 
 protected:
 
     explicit AbstractSchemeTreeItem(AbstractSchemeTreeItemPrivate&);
-    //virtual ~AbstractSchemeTreeItem();
+    virtual ~AbstractSchemeTreeItem();
 
-    //AbstractSchemeTreeItemPrivate* const d;
+    AbstractSchemeTreeItemPrivate* const d;
 
 };

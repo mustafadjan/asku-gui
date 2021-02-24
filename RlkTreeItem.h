@@ -10,8 +10,10 @@ class RLKTreeItem : public ModuleTreeItem
 
 public:
 
-    explicit RLKTreeItem(quint32, const QString& = QString());
+    explicit RLKTreeItem(quint32);
 
+    void setName(const QString& = QString());
     bool isValid(ModelType) const override;
+    QVector<int> setData(const QVariant&) override;
 
 };

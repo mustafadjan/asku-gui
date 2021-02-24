@@ -1,11 +1,11 @@
 #pragma once
 
-#include "AbstractTreeItem_p.h"
+#include <QVector>
 
 enum class ItemType : quint8;
-//class AbstractSchemeTreeItem;
+class AbstractSchemeTreeItem;
 
-class AbstractSchemeTreeItemPrivate : public AbstractTreeItemPrivate
+class AbstractSchemeTreeItemPrivate
 {
     Q_DISABLE_COPY(AbstractSchemeTreeItemPrivate)
 
@@ -13,21 +13,18 @@ public:
 
     ItemType itemType;
     quint32 id{0};
-    qint64 time{0};
-    //QString name;
-    //
-    //QVector<AbstractSchemeTreeItem*> childItems;
-    //AbstractSchemeTreeItem* parentItem{nullptr};
+    QString name;
+
+    QVector<AbstractSchemeTreeItem*> childItems;
+    AbstractSchemeTreeItem* parentItem{nullptr};
 
 protected:
 
-    explicit AbstractSchemeTreeItemPrivate(ItemType itemType, quint32 id, const QString& name,
-                                           AbstractTreeItem* parent = nullptr):
-        AbstractTreeItemPrivate(name, parent),
-        itemType(itemType),
-        id(id)
-        //name(name),
-        //parentItem(parent)
+    explicit AbstractSchemeTreeItemPrivate(quint32 id, const QString& name,
+                                           AbstractSchemeTreeItem* parent = nullptr):
+        id(id),
+        name(name),
+        parentItem(parent)
     {
     }
 

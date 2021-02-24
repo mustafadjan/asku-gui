@@ -12,6 +12,6 @@ public:
 
 signals:
 
-    void modulesData(quint32, const QHash<quint32, QJsonDocument>&) const;
+    void modulesData(quint32, const QHash<quint32, QJsonValue>&) const;
 
 };

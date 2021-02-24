@@ -27,7 +27,7 @@ public:
 public slots:
 
     // 0xD001
-    void buildScheme(quint32, const QHash<quint32, QJsonDocument>&);
+    void buildSchemes(quint32, const QHash<quint32, QJsonValue>&);
     void updateRlkData(const QHash<quint32, Pack0x24>&) const;
     void updateModuleData(quint32, const QHash<quint32, Pack0x24>&) const;
     void updateElemsData(quint32, quint32, const QHash<quint16, ElemData>&) const;

@@ -103,12 +103,11 @@ AbstractConditionalItem::ItemCondition AbstractElemTreeItem::condition() const
     return static_cast<ItemCondition>(d_func()->data.condition);
 }
 
-AbstractElemTreeItemPrivate::AbstractElemTreeItemPrivate(ItemType itemType, quint32 id,
-                                                         const QString& name,
+AbstractElemTreeItemPrivate::AbstractElemTreeItemPrivate(quint32 id, const QString& name,
                                                          AbstractElemTreeItem* parent):
-    AbstractSchemeTreeItemPrivate(itemType, id, name, parent)
+    AbstractSchemeTreeItemPrivate(id, name, parent)
 {
-    data.condition = static_cast<quint8>(AbstractConditionalItem::ItemCondition::Norm);
+    data.condition = static_cast<quint8>(AbstractConditionalItem::ItemCondition::Unknown);
     data.state = static_cast<quint8>(AbstractElemTreeItem::State::Off);
     data.local = data.imit = false;
 }

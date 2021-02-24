@@ -8,14 +8,12 @@ class RLKTreeItemPrivate : public ModuleTreeItemPrivate
 
 public:
 
+    quint8 mobility:4;
+    quint8 prodType:4;
 
-
-    explicit RLKTreeItemPrivate(ItemType itemType, quint32 id, const QString& name):
-        ModuleTreeItemPrivate(itemType, id, name, nullptr)
+    explicit RLKTreeItemPrivate(quint32 id):
+        ModuleTreeItemPrivate(id, nullptr)
     {
-        if (this->name.isEmpty()) {
-            this->name = QObject::tr("РЛК (%1)").arg(id);
-        }
     }
 
 };
