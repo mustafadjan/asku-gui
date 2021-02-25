@@ -214,6 +214,8 @@ class SchemeTreeModelPrivate
         return outData;
     }
 
+    template <typename T>
+    void updateItemData(AbstractSchemeTreeItem*, const T&) const;
     template<typename T1, typename T2>
     void updateItemsData(const T1&, const T2&) const;
     AbstractSchemeTreeItem* item(const QModelIndex&) const;
@@ -233,21 +235,24 @@ class SchemeTreeModelPrivate
 
 };
 
+template <typename T>
+void SchemeTreeModelPrivate::updateItemData(AbstractSchemeTreeItem* item, const T& data) const
+{
+    auto roles = item->setData(QVariant::fromValue(data));
+    if (!roles.isEmpty()) {
+        auto index = this->index(item);
+        emit q_func()->constDataChanged(index, index, roles);
+    }
+}
+
 template<typename T1, typename T2>
 void SchemeTreeModelPrivate::updateItemsData(const T1& items, const T2& data) const
 {
     auto itEnd = data.constEnd();
     for (auto it = data.constBegin(); it != itEnd; ++it) {
         auto itItem = items.constFind(it.key());
-        //if (items.contains(it.key())) {
-        //    AbstractSchemeTreeItem* item = items[it.key()];
         if (itItem != items.constEnd()) {
-            AbstractSchemeTreeItem* item = itItem.value();
-            auto roles = item->setData(QVariant::fromValue(it.value()));
-            if (!roles.isEmpty()) {
-                auto index = this->index(item);
-                emit q_func()->constDataChanged(index, index, roles);
-            }
+            updateItemData(*itItem, *it);
         }
     }
 }
@@ -425,8 +430,12 @@ void SchemeTreeModelPrivate::recvTuneParam(const QJsonObject& jsonObject,
                 item->setValues(values);
             }
             else {
-                item->setMin(static_cast<float>(jsonObject["RangeMin"].toDouble()));
-                item->setMax(static_cast<float>(jsonObject["RangeMax"].toDouble()));
+                if (jsonObject.contains("RangeMin")) {
+                    item->setMin(static_cast<float>(jsonObject["RangeMin"].toDouble()));
+                }
+                if (jsonObject.contains("RangeMax")) {
+                    item->setMax(static_cast<float>(jsonObject["RangeMax"].toDouble()));
+                }
             }
         }
         else { // группа НП
@@ -550,51 +559,71 @@ void SchemeTreeModel::buildSchemes(quint32 rlkId, const QHash<quint32, QJsonValu
     }
 }
 
-void SchemeTreeModel::updateRlkData(const QHash<quint32, Pack0x24>& data) const
-{
-    d_func()->updateItemsData(d_func()->mappedItems, data);
-}
-
-void SchemeTreeModel::updateModuleData(quint32 rlkId, const QHash<quint32, Pack0x24>& data) const
+void SchemeTreeModel::updateRlk(quint32 rlkId, const Pack0x24& data) const
 {
     auto it = d_func()->mappedItems.constFind(rlkId);
     if (it != d_func()->mappedItems.constEnd()) {
-        d_func()->updateItemsData(it.value(), data);
+        d_func()->updateItemData(*it, data);
     }
 }
 
-void SchemeTreeModel::updateElemsData(quint32 rlkId, quint32 moduleId,
-                                      const QHash<quint16, ElemData>& data) const
+void SchemeTreeModel::updateModule(quint32 rlkId, const QHash<quint32, Pack0x24>& data) const
 {
+    auto it = d_func()->mappedItems.constFind(rlkId);
+    if (it != d_func()->mappedItems.constEnd()) {
+        d_func()->updateItemsData(*it, data);
+    }
+}
+
+void SchemeTreeModel::updateElems(quint32 rlkId,
+                                  const QHash<quint32, QHash<quint16, ElemData>>& data) const
+{
+    qDebug() << rlkId << data.size();
     auto itRlk = d_func()->mappedItems.constFind(rlkId);
     if (itRlk != d_func()->mappedItems.constEnd()) {
-        auto itModule = itRlk.value().constFind(moduleId);
-        if (itModule != itRlk.value().constEnd()) {
-            d_func()->updateItemsData(itModule.value().elems, data);
+        const auto& rlkMappedItem = itRlk.value();
+        auto itModuleEnd = rlkMappedItem.constEnd();
+        auto itEnd = data.constEnd();
+        for (auto it = data.constBegin(); it != itEnd; ++it) {
+            auto itModule = rlkMappedItem.constFind(it.key());
+            if (itModule != itModuleEnd) {
+                d_func()->updateItemsData(itModule->elems, *it);
+            }
         }
     }
 }
 
-void SchemeTreeModel::updateCtrlParamsData(quint32 rlkId, quint32 moduleId,
-                                           const QHash<quint32, CtrlParamData>& data) const
+void SchemeTreeModel::updateCtrlParams(quint32 rlkId,
+                                       const QHash<quint32, QHash<quint32, CtrlParamData>>& data)
+const
 {
     auto itRlk = d_func()->mappedItems.constFind(rlkId);
     if (itRlk != d_func()->mappedItems.constEnd()) {
-        auto itModule = itRlk.value().constFind(moduleId);
-        if (itModule != itRlk.value().constEnd()) {
-            d_func()->updateItemsData(itModule.value().ctrlParams, data);
+        const auto& rlkMappedItem = itRlk.value();
+        auto itModuleEnd = rlkMappedItem.constEnd();
+        auto itEnd = data.constEnd();
+        for (auto it = data.constBegin(); it != itEnd; ++it) {
+            auto itModule = rlkMappedItem.constFind(it.key());
+            if (itModule != itModuleEnd) {
+                d_func()->updateItemsData(itModule->ctrlParams, *it);
+            }
         }
     }
 }
 
-void SchemeTreeModel::updateTuneParamsData(quint32 rlkId, quint32 moduleId,
-                                           const QHash<quint32, QVariant>& data) const
+void SchemeTreeModel::updateTuneParams(quint32 rlkId,
+                                       const QHash<quint32, QHash<quint32, QVariant>>& data) const
 {
     auto itRlk = d_func()->mappedItems.constFind(rlkId);
     if (itRlk != d_func()->mappedItems.constEnd()) {
-        auto itModule = itRlk.value().constFind(moduleId);
-        if (itModule != itRlk.value().constEnd()) {
-            d_func()->updateItemsData(itModule.value().tuneParams, data);
+        const auto& rlkMappedItem = itRlk.value();
+        auto itModuleEnd = rlkMappedItem.constEnd();
+        auto itEnd = data.constEnd();
+        for (auto it = data.constBegin(); it != itEnd; ++it) {
+            auto itModule = rlkMappedItem.constFind(it.key());
+            if (itModule != itModuleEnd) {
+                d_func()->updateItemsData(itModule->tuneParams, *it);
+            }
         }
     }
 }

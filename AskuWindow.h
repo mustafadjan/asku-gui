@@ -2,6 +2,8 @@
 
 #include <QWidget>
 
+struct ElemData;
+
 class AskuWindow : public QWidget
 {
     Q_OBJECT
@@ -12,6 +14,7 @@ public:
 
 signals:
 
-    void modulesData(quint32, const QHash<quint32, QJsonValue>&) const;
+    void schemesReceived(quint32, const QHash<quint32, QJsonValue>&) const;
+    void elemDatasReceived(quint32, const QHash<quint32, QHash<quint16, ElemData>>&) const;
 
 };

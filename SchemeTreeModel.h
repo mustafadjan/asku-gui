@@ -28,11 +28,11 @@ public slots:
 
     // 0xD001
     void buildSchemes(quint32, const QHash<quint32, QJsonValue>&);
-    void updateRlkData(const QHash<quint32, Pack0x24>&) const;
-    void updateModuleData(quint32, const QHash<quint32, Pack0x24>&) const;
-    void updateElemsData(quint32, quint32, const QHash<quint16, ElemData>&) const;
-    void updateCtrlParamsData(quint32, quint32, const QHash<quint32, CtrlParamData>&) const;
-    void updateTuneParamsData(quint32, quint32, const QHash<quint32, QVariant>&) const;
+    void updateRlk(quint32, const Pack0x24&) const;
+    void updateModule(quint32, const QHash<quint32, Pack0x24>&) const;
+    void updateElems(quint32, const QHash<quint32, QHash<quint16, ElemData>>&) const;
+    void updateCtrlParams(quint32, const QHash<quint32, QHash<quint32, CtrlParamData>>&) const;
+    void updateTuneParams(quint32, const QHash<quint32, QHash<quint32, QVariant>>&) const;
 
 private:
 
