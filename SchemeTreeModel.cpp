@@ -310,79 +310,61 @@ void SchemeTreeModelPrivate::recvElem(const QJsonObject& jsonObject,
                                       ModuleMappedItem& moduleMappedItem,
                                       AbstractElemTreeItem* parent)
 {
-    if (parent) {
-        AbstractElemTreeItem* item = nullptr;
-        const auto& jsonIDElem = jsonObject["IDElem"];
-        if (jsonIDElem.isDouble()) {
-            int size = parent->childCount();
-            q_func()->beginInsertRows(index(parent), size, size);
-            quint16 ID = static_cast<quint16>(jsonIDElem.toInt());
-            item = moduleMappedItem.elems[ID] =
-            new ElemTreeItem(ID, jsonObject["Name"].toString(), parent);
-            q_func()->endInsertRows();
-        }
-        else { // элемент без номера
-            item = parent;
-        }
-
-        recvValue(jsonObject["Elements"], moduleMappedItem, item,
-                  &SchemeTreeModelPrivate::recvElem);
-
-        recvValue(jsonObject["Params"], moduleMappedItem.ctrlParams,
-                  static_cast<AbstractSchemeTreeItem*>(item),
-                  &SchemeTreeModelPrivate::recvCtrlParam);
-
-        recvValue(jsonObject["ConfigParam"], moduleMappedItem.tuneParams,
-                  static_cast<AbstractSchemeTreeItem*>(item),
-                  &SchemeTreeModelPrivate::recvTuneParam);
+    AbstractElemTreeItem* item = nullptr;
+    const auto& jsonIDElem = jsonObject["IDElem"];
+    if (jsonIDElem.isDouble()) {
+        quint16 id = static_cast<quint16>(jsonIDElem.toInt());
+        item = moduleMappedItem.elems[id] =
+        new ElemTreeItem(id, jsonObject["Name"].toString(), parent);
     }
+    else { // элемент без номера
+        item = parent;
+    }
+
+    recvValue(jsonObject["Elements"], moduleMappedItem, item, &SchemeTreeModelPrivate::recvElem);
+
+    recvValue(jsonObject["Params"], moduleMappedItem.ctrlParams,
+              static_cast<AbstractSchemeTreeItem*>(item), &SchemeTreeModelPrivate::recvCtrlParam);
+
+    recvValue(jsonObject["ConfigParam"], moduleMappedItem.tuneParams,
+              static_cast<AbstractSchemeTreeItem*>(item), &SchemeTreeModelPrivate::recvTuneParam);
 }
 
 void SchemeTreeModelPrivate::recvCtrlParam(const QJsonObject& jsonObject,
                                            QHash<quint32, CtrlParamTreeItem*>& ctrlParamItems,
                                            AbstractSchemeTreeItem* parent)
 {
-    if (parent) {
-        int size = parent->childCount();
-        q_func()->beginInsertRows(index(parent), size, size);
+    quint32 id = static_cast<quint32>(jsonObject["IDParam"].toDouble());
+    auto item = new CtrlParamTreeItem(id, jsonObject["Name"].toString(), parent);
+    item->setDescription(jsonObject["Description"].toString());
 
-        quint32 id = static_cast<quint32>(jsonObject["IDParam"].toDouble());
-        auto item = new CtrlParamTreeItem(id, jsonObject["Name"].toString(), parent);
-        item->setDescription(jsonObject["Description"].toString());
-
-        if (jsonObject.contains("Params")) { // группа КП
-            q_func()->endInsertRows();
-
-            recvValue(jsonObject["Params"], ctrlParamItems,
-                      static_cast<AbstractSchemeTreeItem*>(item),
-                      &SchemeTreeModelPrivate::recvCtrlParam);
-        }
-        else {
-            ctrlParamItems[id] = item;
-            item->setFormat(jsonObject["Format"].toString());
-            QHash<int, QString> templates;
-            auto recvTemplate = [&templates] (const QJsonObject& jsonTemplate) {
-                const auto& jsonValue = jsonTemplate["Value"];
-                if (jsonValue.isDouble()) {
-                    templates[jsonValue.toInt()] = jsonTemplate["Text"].toString();
-                }
-                else if (jsonValue.isBool()) {
-                    templates[jsonValue.toBool()] = jsonTemplate["Text"].toString();
-                }
-            };
-            const auto& jsonTemplates = jsonObject["Template"];
-            if (jsonTemplates.isArray()) {
-                for (const auto jsonTemplate : jsonTemplates.toArray()) {
-                    recvTemplate(jsonTemplate.toObject());
-                }
+    if (jsonObject.contains("Params")) { // группа КП
+        recvValue(jsonObject["Params"], ctrlParamItems, static_cast<AbstractSchemeTreeItem*>(item),
+                  &SchemeTreeModelPrivate::recvCtrlParam);
+    }
+    else {
+        ctrlParamItems[id] = item;
+        item->setFormat(jsonObject["Format"].toString());
+        QHash<int, QString> templates;
+        auto recvTemplate = [&templates] (const QJsonObject& jsonTemplate) {
+            const auto& jsonValue = jsonTemplate["Value"];
+            if (jsonValue.isDouble()) {
+                templates[jsonValue.toInt()] = jsonTemplate["Text"].toString();
             }
-            else if (jsonTemplates.isObject()) {
-                recvTemplate(jsonTemplates.toObject());
+            else if (jsonValue.isBool()) {
+                templates[jsonValue.toBool()] = jsonTemplate["Text"].toString();
             }
-            item->setTemplates(templates);
-
-            q_func()->endInsertRows();
+        };
+        const auto& jsonTemplates = jsonObject["Template"];
+        if (jsonTemplates.isArray()) {
+            for (const auto jsonTemplate : jsonTemplates.toArray()) {
+                recvTemplate(jsonTemplate.toObject());
+            }
         }
+        else if (jsonTemplates.isObject()) {
+            recvTemplate(jsonTemplates.toObject());
+        }
+        item->setTemplates(templates);
     }
 }
 
@@ -391,17 +373,12 @@ void SchemeTreeModelPrivate::recvTuneParam(const QJsonObject& jsonObject,
                                            AbstractSchemeTreeItem* parent)
 {
     if (parent) {
-        int size = parent->childCount();
-        q_func()->beginInsertRows(index(parent), size, size);
-
         quint32 id = static_cast<quint32>(jsonObject["IDConfigParam"].toDouble(0.));
         auto item = new TuneParamTreeItem(id, jsonObject["NameConfig"].toString(), parent);
         item->setDescription(jsonObject["Description"].toString());
 
         if (jsonObject.contains("ConfigParam")) { // группа НП
             item->setType(QMetaType::UnknownType);
-
-            q_func()->endInsertRows();
 
             recvValue(jsonObject["ConfigParam"], tuneParamItems,
                       static_cast<AbstractSchemeTreeItem*>(item),
@@ -448,8 +425,6 @@ void SchemeTreeModelPrivate::recvTuneParam(const QJsonObject& jsonObject,
                     item->setMax(static_cast<float>(jsonObject["RangeMax"].toDouble()));
                 }
             }
-
-            q_func()->endInsertRows();
         }
     }
 }
@@ -557,11 +532,13 @@ void SchemeTreeModel::buildSchemes(quint32 rlkId, const QHash<quint32, QJsonValu
 
         const auto& moduleScheme = schemeIt.value();
         if (moduleMappedItem.scheme != moduleScheme) { // схема изменилась
+            beginResetModel();
             moduleMappedItem.clear();
             moduleMappedItem.scheme = moduleScheme;
             d_func()->recvValue(schemeIt.value(), moduleMappedItem,
                                 static_cast<AbstractElemTreeItem*>(moduleMappedItem.module),
                                 &SchemeTreeModelPrivate::recvElem);
+            endResetModel();
         }
     }
 }

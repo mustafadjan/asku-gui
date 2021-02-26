@@ -74,7 +74,8 @@ void AbstractSchemeTreeItem::setName(const QString& name)
 
 void AbstractSchemeTreeItem::removeChilds()
 {
-    for (const auto item : d->childItems) {
+    //qDeleteAll(d->childItems);
+    for (auto item : d->childItems) {
         delete item;
     }
 }
