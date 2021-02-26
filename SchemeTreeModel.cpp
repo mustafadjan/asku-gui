@@ -138,7 +138,7 @@ class SchemeTreeModelPrivate
         auto tuneParam100 = new TuneParamTreeItem(0, "Тест НП 1", elem10);
         auto ctrlParam101 = new CtrlParamTreeItem(0, "Тест КП 1", elem10);
         auto tuneParam102 = new TuneParamTreeItem(1, "Тест НП 3", elem10);
-        auto tuneParam103 = new TuneParamTreeItem("Группа НП 1", elem10);
+        auto tuneParam103 = new TuneParamTreeItem(0, "Группа НП 1", elem10);
         auto tuneParam1000 = new TuneParamTreeItem(2, "Тест НП 4", tuneParam103);
         auto tuneParam1001 = new TuneParamTreeItem(3, "Тест НП 5", tuneParam103);
         auto elem11 = new ElemTreeItem(1, "СКК", elem1);
@@ -346,17 +346,19 @@ void SchemeTreeModelPrivate::recvCtrlParam(const QJsonObject& jsonObject,
         int size = parent->childCount();
         q_func()->beginInsertRows(index(parent), size, size);
 
-        auto item = new CtrlParamTreeItem(static_cast<quint32>(jsonObject["IDParam"].toDouble()),
-                                          jsonObject["Name"].toString(), parent);
+        quint32 id = static_cast<quint32>(jsonObject["IDParam"].toDouble());
+        auto item = new CtrlParamTreeItem(id, jsonObject["Name"].toString(), parent);
         item->setDescription(jsonObject["Description"].toString());
 
-        if (jsonObject.contains("Params")) {
+        if (jsonObject.contains("Params")) { // группа КП
+            q_func()->endInsertRows();
+
             recvValue(jsonObject["Params"], ctrlParamItems,
                       static_cast<AbstractSchemeTreeItem*>(item),
                       &SchemeTreeModelPrivate::recvCtrlParam);
         }
         else {
-            ctrlParamItems[item->id()] = item;
+            ctrlParamItems[id] = item;
             item->setFormat(jsonObject["Format"].toString());
             QHash<int, QString> templates;
             auto recvTemplate = [&templates] (const QJsonObject& jsonTemplate) {
@@ -378,9 +380,9 @@ void SchemeTreeModelPrivate::recvCtrlParam(const QJsonObject& jsonObject,
                 recvTemplate(jsonTemplates.toObject());
             }
             item->setTemplates(templates);
-        }
 
-        q_func()->endInsertRows();
+            q_func()->endInsertRows();
+        }
     }
 }
 
@@ -392,12 +394,21 @@ void SchemeTreeModelPrivate::recvTuneParam(const QJsonObject& jsonObject,
         int size = parent->childCount();
         q_func()->beginInsertRows(index(parent), size, size);
 
-        TuneParamTreeItem* item = nullptr;
-        const auto& jsonIDConfigParam = jsonObject["IDConfigParam"];
-        if (jsonIDConfigParam.isDouble()) {
-            quint32 ID = static_cast<quint32>(jsonIDConfigParam.toDouble());
-            item = tuneParamItems[ID] =
-            new TuneParamTreeItem(ID, jsonObject["NameConfig"].toString(), parent);
+        quint32 id = static_cast<quint32>(jsonObject["IDConfigParam"].toDouble(0.));
+        auto item = new TuneParamTreeItem(id, jsonObject["NameConfig"].toString(), parent);
+        item->setDescription(jsonObject["Description"].toString());
+
+        if (jsonObject.contains("ConfigParam")) { // группа НП
+            item->setType(QMetaType::UnknownType);
+
+            q_func()->endInsertRows();
+
+            recvValue(jsonObject["ConfigParam"], tuneParamItems,
+                      static_cast<AbstractSchemeTreeItem*>(item),
+                      &SchemeTreeModelPrivate::recvTuneParam);
+        }
+        else {
+            item = tuneParamItems[id] = item;
             switch (jsonObject["TypeConfig"].toInt()) {
                 case Float:
                     item->setType(QMetaType::Float);
@@ -437,13 +448,9 @@ void SchemeTreeModelPrivate::recvTuneParam(const QJsonObject& jsonObject,
                     item->setMax(static_cast<float>(jsonObject["RangeMax"].toDouble()));
                 }
             }
-        }
-        else { // группа НП
-            item = new TuneParamTreeItem(jsonObject["NameConfig"].toString(), parent);
-        }
-        item->setDescription(jsonObject["Description"].toString());
 
-        q_func()->endInsertRows();
+            q_func()->endInsertRows();
+        }
     }
 }
 

@@ -13,11 +13,6 @@ TuneParamTreeItem::TuneParamTreeItem(quint32 id, const QString& name,
     d_func()->itemType = ItemType::TuneParam;
 }
 
-TuneParamTreeItem::TuneParamTreeItem(const QString& name, AbstractSchemeTreeItem* parent):
-    TuneParamTreeItem(0, name, parent)
-{
-}
-
 int TuneParamTreeItem::columnCount() const
 {
     return 3;

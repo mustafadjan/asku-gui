@@ -15,7 +15,7 @@ AskuWindow::AskuWindow(QWidget* parent):
 {
     auto sourceModel = new SchemeTreeModel(this);
     connect(this, &AskuWindow::schemesReceived, sourceModel, &SchemeTreeModel::buildSchemes);
-    connect(this, &AskuWindow::elemDatasReceived, sourceModel, &SchemeTreeModel::updateElems);
+    //connect(this, &AskuWindow::elemDatasReceived, sourceModel, &SchemeTreeModel::updateElems);
 
     auto elemTreeView = new ElemTreeView(sourceModel, this);
 

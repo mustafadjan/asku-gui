@@ -12,7 +12,6 @@ class TuneParamTreeItem : public AbstractSchemeTreeItem
 public:
 
     explicit TuneParamTreeItem(quint32, const QString&, AbstractSchemeTreeItem*);
-    explicit TuneParamTreeItem(const QString&, AbstractSchemeTreeItem*);
 
     int columnCount() const override;
     QVariant data(int) const override;
