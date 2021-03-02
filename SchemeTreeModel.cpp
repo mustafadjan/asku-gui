@@ -27,7 +27,7 @@ class SchemeTreeModelPrivate
 
     SchemeTreeModel* q_ptr{nullptr};
 
-    QTimer* fakeTimerElemCtrlParam{nullptr}, *fakeTimerRlkModule{nullptr}; // todo: delete later
+    QTimer* fakeTimer{nullptr}, *fakeTimerRlkModule{nullptr}; // todo: delete later
 
     struct RLKMappedItem
     {
@@ -83,8 +83,7 @@ class SchemeTreeModelPrivate
         //
         //setupModelData();
         //
-        //fakeTimerElemCtrlParam = new QTimer(q);
-        //fakeTimerRlkModule = new QTimer(q);
+        //fakeTimer = new QTimer(q);
         //
         //q_func()->connect(fakeTimerElemCtrlParam, &QTimer::timeout, q_func(), [this]
         //{
@@ -100,8 +99,12 @@ class SchemeTreeModelPrivate
         //              generateRandomRlkModuleData(static_cast<quint32>(EIdUser::ID_POI) << 8 | 1));
         //});
         //
-        ////fakeTimerElemCtrlParam->start(5000);
-        //fakeTimerRlkModule->start(1000);
+        //q_func()->connect(fakeTimer, &QTimer::timeout, q_func(), [this]
+        //{
+        //    q_func()->beginResetModel();
+        //    q_func()->endResetModel();
+        //});
+        //fakeTimer->start(10000);
     }
 
     void setupModelData() // todo: delete later
@@ -204,7 +207,7 @@ class SchemeTreeModelPrivate
 
         for (quint32 i = 0; i < 10; ++i) {
             CtrlParamData ctrlParamData;
-            ctrlParamData.time1 = currentTimeUtc;
+            ctrlParamData.timeRecv = currentTimeUtc;
             ctrlParamData.condition = static_cast<quint8>(QRandomGenerator::system()->
                  bounded(static_cast<int>(AbstractConditionalItem::ItemCondition::Uncontrol) + 1));
             ctrlParamData.value = QString::number(QRandomGenerator::system()->bounded(100));
@@ -226,7 +229,7 @@ class SchemeTreeModelPrivate
 
     template<typename T1, typename T2>
     void recvValue(const QJsonValue&, T1&, T2*,
-                   void (SchemeTreeModelPrivate::*recv)(const QJsonObject&, T1&, T2*));
+                   void (SchemeTreeModelPrivate::*)(const QJsonObject&, T1&, T2*));
     void recvElem(const QJsonObject&, ModuleMappedItem&, AbstractElemTreeItem*);
     void recvCtrlParam(const QJsonObject&, QHash<quint32, CtrlParamTreeItem*>&,
                        AbstractSchemeTreeItem*);
@@ -372,58 +375,56 @@ void SchemeTreeModelPrivate::recvTuneParam(const QJsonObject& jsonObject,
                                            QHash<quint32, TuneParamTreeItem*>& tuneParamItems,
                                            AbstractSchemeTreeItem* parent)
 {
-    if (parent) {
-        quint32 id = static_cast<quint32>(jsonObject["IDConfigParam"].toDouble(0.));
-        auto item = new TuneParamTreeItem(id, jsonObject["NameConfig"].toString(), parent);
-        item->setDescription(jsonObject["Description"].toString());
+    quint32 id = static_cast<quint32>(jsonObject["IDConfigParam"].toDouble(0.));
+    auto item = new TuneParamTreeItem(id, jsonObject["NameConfig"].toString(), parent);
+    item->setDescription(jsonObject["Description"].toString());
 
-        if (jsonObject.contains("ConfigParam")) { // группа НП
-            item->setType(QMetaType::UnknownType);
+    if (jsonObject.contains("ConfigParam")) { // группа НП
+        item->setType(QMetaType::UnknownType);
 
-            recvValue(jsonObject["ConfigParam"], tuneParamItems,
-                      static_cast<AbstractSchemeTreeItem*>(item),
-                      &SchemeTreeModelPrivate::recvTuneParam);
+        recvValue(jsonObject["ConfigParam"], tuneParamItems,
+                  static_cast<AbstractSchemeTreeItem*>(item),
+                  &SchemeTreeModelPrivate::recvTuneParam);
+    }
+    else {
+        item = tuneParamItems[id] = item;
+        switch (jsonObject["TypeConfig"].toInt()) {
+            case Float:
+                item->setType(QMetaType::Float);
+                break;
+            case String:
+                item->setType(QMetaType::QString);
+                break;
+            case Int32:
+                item->setType(QMetaType::Int);
+                break;
+            case Bool:
+                item->setType(QMetaType::Bool);
+                break;
+            default:
+                item->setType(QMetaType::UnknownType);
+        }
+        item->setSaveStatus(jsonObject["IsSave"].toBool());
+        item->setDefault(jsonObject["Default"].toVariant());
+        if (jsonObject.contains("Values")) {
+            const auto& jsonValues = jsonObject["Values"];
+            QVector<QString> values;
+            if (jsonValues.isArray()) {
+                for (const auto jsonValueRef : jsonValues.toArray()) {
+                    values.append(jsonValueRef.toString());
+                }
+            }
+            else if (jsonValues.isString()) {
+                values.append(jsonValues.toString());
+            }
+            item->setValues(values);
         }
         else {
-            item = tuneParamItems[id] = item;
-            switch (jsonObject["TypeConfig"].toInt()) {
-                case Float:
-                    item->setType(QMetaType::Float);
-                    break;
-                case String:
-                    item->setType(QMetaType::QString);
-                    break;
-                case Int32:
-                    item->setType(QMetaType::Int);
-                    break;
-                case Bool:
-                    item->setType(QMetaType::Bool);
-                    break;
-                default:
-                    item->setType(QMetaType::UnknownType);
+            if (jsonObject.contains("RangeMin")) {
+                item->setMin(static_cast<float>(jsonObject["RangeMin"].toDouble()));
             }
-            item->setSaveStatus(jsonObject["IsSave"].toBool());
-            item->setDefault(jsonObject["Default"].toVariant());
-            if (jsonObject.contains("Values")) {
-                const auto& jsonValues = jsonObject["Values"];
-                QVector<QString> values;
-                if (jsonValues.isArray()) {
-                    for (const auto jsonValueRef : jsonValues.toArray()) {
-                        values.append(jsonValueRef.toString());
-                    }
-                }
-                else if (jsonValues.isString()) {
-                    values.append(jsonValues.toString());
-                }
-                item->setValues(values);
-            }
-            else {
-                if (jsonObject.contains("RangeMin")) {
-                    item->setMin(static_cast<float>(jsonObject["RangeMin"].toDouble()));
-                }
-                if (jsonObject.contains("RangeMax")) {
-                    item->setMax(static_cast<float>(jsonObject["RangeMax"].toDouble()));
-                }
+            if (jsonObject.contains("RangeMax")) {
+                item->setMax(static_cast<float>(jsonObject["RangeMax"].toDouble()));
             }
         }
     }
@@ -532,6 +533,8 @@ void SchemeTreeModel::buildSchemes(quint32 rlkId, const QHash<quint32, QJsonValu
 
         const auto& moduleScheme = schemeIt.value();
         if (moduleMappedItem.scheme != moduleScheme) { // схема изменилась
+            // ресетит всю модель, то есть все РЛК и их модули, и сворачивается все дерево
+            // todo: поменять на deleteRows/insertRows индивидуально и соблюдая порядок
             beginResetModel();
             moduleMappedItem.clear();
             moduleMappedItem.scheme = moduleScheme;
@@ -562,7 +565,6 @@ void SchemeTreeModel::updateModule(quint32 rlkId, const QHash<quint32, Pack0x24>
 void SchemeTreeModel::updateElems(quint32 rlkId,
                                   const QHash<quint32, QHash<quint16, ElemData>>& data) const
 {
-    qDebug() << rlkId << data.size();
     auto itRlk = d_func()->mappedItems.constFind(rlkId);
     if (itRlk != d_func()->mappedItems.constEnd()) {
         const auto& rlkMappedItem = itRlk.value();

@@ -22,9 +22,14 @@ QVariant CtrlParamTreeItem::data(int column) const
         case 1:
             return d_func()->data.value;
         case 2:
-            return QDateTime::fromMSecsSinceEpoch(d_func()->data.time1).toUTC().toString("hh:mm:ss");
+            return QDateTime::fromMSecsSinceEpoch(d_func()->data.timeRecv).toUTC()
+                                                  .toString("hh:mm:ss");
         case 3:
-            return QDateTime::fromMSecsSinceEpoch(d_func()->data.time2).toUTC().toString("hh:mm:ss");
+            return QDateTime::fromMSecsSinceEpoch(d_func()->data.timeCond).toUTC()
+                                                  .toString("hh:mm:ss");
+        case 4:
+            return QDateTime::fromMSecsSinceEpoch(d_func()->data.timeVal).toUTC()
+                                                  .toString("hh:mm:ss");
     }
 
     return QVariant();
@@ -89,5 +94,4 @@ CtrlParamTreeItemPrivate::CtrlParamTreeItemPrivate(quint32 id, const QString& na
     AbstractSchemeTreeItemPrivate(id, name, parent)
 {
     data.condition = static_cast<quint8>(AbstractConditionalItem::ItemCondition::Norm);
-    data.touchedCondition = data.touchedValue = false;
 }
