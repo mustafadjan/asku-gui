@@ -11,7 +11,7 @@ CtrlParamTreeItem::CtrlParamTreeItem(quint32 id, const QString& name,
 
 int CtrlParamTreeItem::columnCount() const
 {
-    return 4;
+    return 5;
 }
 
 QVariant CtrlParamTreeItem::data(int column) const
