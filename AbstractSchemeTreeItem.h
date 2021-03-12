@@ -11,6 +11,9 @@ namespace Qt {
         FullPathRole = UserRole + 1,
         IDRole,
         TimeRole,
+        ValueRole,
+        LocalRole,
+        ImitRole,
         NameRole,
         IsModuleRole,
         DescriptionRole,
@@ -46,8 +49,9 @@ class AbstractSchemeTreeItem
 {
     Q_DECLARE_PRIVATE_D(d, AbstractSchemeTreeItem)
 
-    friend class SchemeTreeModelPrivate;
 public:
+
+    virtual ~AbstractSchemeTreeItem();
 
     AbstractSchemeTreeItem* child(int) const;
     bool hasChild() const;
@@ -55,6 +59,7 @@ public:
     int row() const;
     AbstractSchemeTreeItem* parentItem() const;
     AbstractSchemeTreeItem* rootItem() const;
+    AbstractSchemeTreeItem* preRootItem() const;
     ItemType type() const;
     quint32 id() const;
     void setName(const QString&);
@@ -70,7 +75,6 @@ public:
 protected:
 
     explicit AbstractSchemeTreeItem(AbstractSchemeTreeItemPrivate&);
-    virtual ~AbstractSchemeTreeItem();
 
     AbstractSchemeTreeItemPrivate* const d;
 

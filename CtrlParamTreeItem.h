@@ -2,10 +2,12 @@
 
 #include "AbstractSchemeTreeItem.h"
 #include "AbstractConditionalItem.h"
+#include "AbstractValuableItem.h"
 
 class CtrlParamTreeItemPrivate;
 
-class CtrlParamTreeItem : public AbstractSchemeTreeItem, public AbstractConditionalItem
+class CtrlParamTreeItem : public AbstractSchemeTreeItem, public AbstractConditionalItem,
+                          public AbstractValuableItem
 {
     Q_DECLARE_PRIVATE_D(d, CtrlParamTreeItem)
 
@@ -25,6 +27,7 @@ public:
 
 protected:
 
-    ItemCondition condition() const override;
+    EModulState condition() const override;
+    void setValueType(QMetaType::Type) override;
 
 };

@@ -50,8 +50,20 @@ AbstractSchemeTreeItem* AbstractSchemeTreeItem::parentItem() const
 
 AbstractSchemeTreeItem* AbstractSchemeTreeItem::rootItem() const
 {
-    auto rootItem = d_func()->parentItem;
+    auto rootItem = const_cast<AbstractSchemeTreeItem*>(this);
     while (rootItem && rootItem->parentItem()) {
+        rootItem = rootItem->parentItem();
+    }
+    return rootItem;
+}
+
+AbstractSchemeTreeItem* AbstractSchemeTreeItem::preRootItem() const
+{
+    if (!parentItem()) {
+        return nullptr;
+    }
+    auto rootItem = const_cast<AbstractSchemeTreeItem*>(this);
+    while (rootItem && rootItem->parentItem() && rootItem->parentItem()->parentItem()) {
         rootItem = rootItem->parentItem();
     }
     return rootItem;
@@ -74,10 +86,9 @@ void AbstractSchemeTreeItem::setName(const QString& name)
 
 void AbstractSchemeTreeItem::removeChilds()
 {
-    //qDeleteAll(d->childItems);
-    for (auto item : d->childItems) {
-        delete item;
-    }
+    // удаление по копии контейнера, т.к. удаляемые item-ы также удаляют себя из контейнера
+    // потомков родителя (см. деструктор)
+    qDeleteAll(QVector<AbstractSchemeTreeItem*>(d->childItems));
 }
 
 QVariant AbstractSchemeTreeItem::roleData(int role) const

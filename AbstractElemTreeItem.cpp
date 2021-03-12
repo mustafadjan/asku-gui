@@ -1,8 +1,9 @@
 #include "AbstractElemTreeItem.h"
 #include "AbstractElemTreeItem_p.h"
+#include "Enums.h"
 #include <QPainter>
 
-const QMap<AbstractElemTreeItem::State, QImage> populateStateImages()
+const QMap<EModulWork, QImage> populateStateImages()
 {
     QImage image(8, 8, QImage::Format_ARGB32_Premultiplied);
     image.fill(Qt::transparent);
@@ -15,18 +16,18 @@ const QMap<AbstractElemTreeItem::State, QImage> populateStateImages()
         return *dynamic_cast<QImage*>(painter.device());
     };
 
-    QMap<AbstractElemTreeItem::State, QImage> stateImages
+    QMap<EModulWork, QImage> stateImages
     {
-        {AbstractElemTreeItem::State::On, getRound(Qt::green)},
-        {AbstractElemTreeItem::State::Off, getRound(Qt::red)},
-        {AbstractElemTreeItem::State::TurnOn, getRound(Qt::yellow)},
-        {AbstractElemTreeItem::State::TurnOff, getRound(qRgb(255, 127, 0))}
+        {eWkOff,    getRound(Qt::red)},
+        {eWkOn,     getRound(Qt::green)},
+        {eWkOning,  getRound(Qt::yellow)},
+        {eWkOffing, getRound(qRgb(255, 127, 0))}
     };
 
     return stateImages;
 }
 
-static const QMap<AbstractElemTreeItem::State, QImage> stateImages(populateStateImages());
+static const QMap<EModulWork, QImage> stateImages(populateStateImages());
 
 AbstractElemTreeItem::AbstractElemTreeItem(AbstractElemTreeItemPrivate& d):
     AbstractSchemeTreeItem(d)
@@ -35,7 +36,7 @@ AbstractElemTreeItem::AbstractElemTreeItem(AbstractElemTreeItemPrivate& d):
 
 int AbstractElemTreeItem::columnCount() const
 {
-    return 4;
+    return 5;
 }
 
 QVariant AbstractElemTreeItem::data(int column) const
@@ -54,7 +55,7 @@ QVariant AbstractElemTreeItem::roleData(int role) const
         case Qt::ConditionRole:
             return conditionBrush();
         case Qt::StateRole:
-            return stateImages[static_cast<State>(d_func()->data.state)];
+            return stateImages[static_cast<EModulWork>(d_func()->data.state)];
         case Qt::ElemFlagsRole:
             QFont font;
             font.setItalic(d_func()->data.imit);
@@ -98,17 +99,17 @@ bool AbstractElemTreeItem::isValid(ModelType modelType) const
     }
 }
 
-AbstractConditionalItem::ItemCondition AbstractElemTreeItem::condition() const
+EModulState AbstractElemTreeItem::condition() const
 {
-    return static_cast<ItemCondition>(d_func()->data.condition);
+    return static_cast<EModulState>(d_func()->data.condition);
 }
 
 AbstractElemTreeItemPrivate::AbstractElemTreeItemPrivate(quint32 id, const QString& name,
                                                          AbstractElemTreeItem* parent):
     AbstractSchemeTreeItemPrivate(id, name, parent)
 {
-    data.condition = static_cast<quint8>(AbstractConditionalItem::ItemCondition::Unknown);
-    data.state = static_cast<quint8>(AbstractElemTreeItem::State::Off);
+    data.condition = eStUnknown;
+    data.state = eWkOff;
     data.local = data.imit = false;
 }
 

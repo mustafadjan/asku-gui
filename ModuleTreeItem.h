@@ -1,6 +1,7 @@
 #pragma once
 
 #include "AbstractElemTreeItem.h"
+#include <QString>
 
 class ModuleTreeItemPrivate;
 class RLKTreeItem;

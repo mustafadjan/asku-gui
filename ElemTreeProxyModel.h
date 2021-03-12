@@ -9,7 +9,6 @@ class ElemTreeProxyModel : public SchemeBaseProxyModel
 public:
 
     explicit ElemTreeProxyModel(QAbstractItemModel*, QObject* = nullptr);
-    ~ElemTreeProxyModel() override;
 
     QVariant data(const QModelIndex&, int = Qt::DisplayRole) const override;
     QVariant headerData(int, Qt::Orientation, int = Qt::DisplayRole) const override;

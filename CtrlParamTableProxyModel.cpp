@@ -9,7 +9,7 @@ CtrlParamTableProxyModel::CtrlParamTableProxyModel(QAbstractItemModel* sourceMod
 
 int CtrlParamTableProxyModel::columnCount(const QModelIndex&) const
 {
-    return 4;
+    return 5;
 }
 
 QVariant CtrlParamTableProxyModel::data(const QModelIndex& index, int role) const
@@ -33,9 +33,11 @@ const
             case 1:
                 return tr("Значение");
             case 2:
-                return tr("Время 1");
+                return tr("Время приема");
             case 3:
-                return tr("Время 2");
+                return tr("Время обновления\nстатуса");
+            case 4:
+                return tr("Время обновления\nзначения");
         }
     }
 

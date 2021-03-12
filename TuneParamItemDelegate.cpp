@@ -27,13 +27,6 @@ QWidget* TuneParamItemDelegate::createEditor(QWidget* parent, const QStyleOption
 
 void TuneParamItemDelegate::setEditorData(QWidget* editor, const QModelIndex& index) const
 {
-    if (index.column() == 2) {
-        auto tuneParamItem = getTuneParamItem(index);
-        if (tuneParamItem) {
-            qDebug() << __PRETTY_FUNCTION__;
-            //tuneParamItem->createEditor(parent);
-        }
-    }
 }
 
 void TuneParamItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* model,
@@ -48,7 +41,7 @@ void TuneParamItemDelegate::setModelData(QWidget* editor, QAbstractItemModel* mo
 
 void TuneParamItemDelegate::updateEditorGeometry(QWidget* editor,
                                                  const QStyleOptionViewItem& option,
-                                                 const QModelIndex& /*index*/) const
+                                                 const QModelIndex&) const
 {
     editor->setGeometry(option.rect);
 }

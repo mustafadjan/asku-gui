@@ -1,6 +1,7 @@
 #include "CtrlParamTreeItem.h"
 #include "CtrlParamTreeItem_p.h"
 #include <QDateTime>
+#include <QBrush>
 
 CtrlParamTreeItem::CtrlParamTreeItem(quint32 id, const QString& name,
                                      AbstractSchemeTreeItem* parent):
@@ -20,7 +21,7 @@ QVariant CtrlParamTreeItem::data(int column) const
         case 0:
             return d_func()->name;
         case 1:
-            return d_func()->data.value;
+            return d_func()->value();
         case 2:
             return QDateTime::fromMSecsSinceEpoch(d_func()->data.timeRecv).toUTC()
                                                   .toString("hh:mm:ss");
@@ -47,14 +48,30 @@ QVariant CtrlParamTreeItem::roleData(int role) const
 
 QVector<int> CtrlParamTreeItem::setData(const QVariant& data)
 {
-    QVector<int> roles;
-
     if (data.canConvert<CtrlParamData>()) {
-        d_func()->data = data.value<CtrlParamData>();
-        roles << Qt::ConditionRole;
+        auto inData = data.value<CtrlParamData>();
+        auto rawValue = inData.value.toByteArray();
+        switch (d_func()->data.value.userType()) {
+            case QMetaType::Float:
+                inData.value = *reinterpret_cast<const float*>(rawValue.constData());
+                break;
+            case QMetaType::QString:
+                inData.value = QString::fromUtf8(rawValue);
+                break;
+            case QMetaType::Int:
+                inData.value = *reinterpret_cast<const int*>(rawValue.constData());
+                break;
+            case QMetaType::Bool:
+                inData.value = *reinterpret_cast<const bool*>(rawValue.constData());
+                break;
+            default:
+                inData.value = QVariant(QVariant::Type(QMetaType::UnknownType));
+        }
+        d_func()->data = inData;
+        return {Qt::ConditionRole, Qt::TimeRole, Qt::ValueRole};
     }
 
-    return roles;
+    return {};
 }
 
 bool CtrlParamTreeItem::isValid(ModelType modelType) const
@@ -84,14 +101,18 @@ void CtrlParamTreeItem::setTemplates(const QHash<int, QString> templates)
     d_func()->templates = templates;
 }
 
-AbstractConditionalItem::ItemCondition CtrlParamTreeItem::condition() const
+EModulState CtrlParamTreeItem::condition() const
 {
-    return static_cast<ItemCondition>(d_func()->data.condition);
+    return static_cast<EModulState>(d_func()->data.condition);
 }
 
-CtrlParamTreeItemPrivate::CtrlParamTreeItemPrivate(quint32 id, const QString& name,
-                                                   AbstractSchemeTreeItem* parent):
-    AbstractSchemeTreeItemPrivate(id, name, parent)
+void CtrlParamTreeItem::setValueType(QMetaType::Type type)
 {
-    data.condition = static_cast<quint8>(AbstractConditionalItem::ItemCondition::Norm);
+    // если КП - группа, то ему ставится статус "норма" (по умолчанию "неизвестно")
+    // для нормальной подсветки, т.к. его статус не будет обновляться
+    if (type == QMetaType::User) {
+        setData(QVariant::fromValue(CtrlParamData{eStNorma, 0, 0, 0, QVariant()}));
+    }
+
+    d_func()->data.value = QVariant(QVariant::Type(type));
 }

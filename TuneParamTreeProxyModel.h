@@ -2,6 +2,8 @@
 
 #include "SchemeBaseProxyModel.h"
 
+struct OneConfigParamValue;
+
 class TuneParamTreeProxyModel : public SchemeBaseProxyModel
 {
     Q_OBJECT
@@ -15,5 +17,7 @@ public:
     bool setData(const QModelIndex&, const QVariant&, int = Qt::EditRole) override;
     QVariant headerData(int, Qt::Orientation, int = Qt::DisplayRole) const override;
     Qt::ItemFlags flags(const QModelIndex&) const override;
+
+    QList<OneConfigParamValue> getNewValues(const QModelIndex&) const;
 
 };

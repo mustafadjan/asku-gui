@@ -14,8 +14,11 @@ AskuWindow::AskuWindow(QWidget* parent):
     QWidget(parent)
 {
     auto sourceModel = new SchemeTreeModel(this);
-    connect(this, &AskuWindow::schemesReceived, sourceModel, &SchemeTreeModel::buildSchemes);
-    connect(this, &AskuWindow::elemDatasReceived, sourceModel, &SchemeTreeModel::updateElems);
+    connect(this, &AskuWindow::schemesRecvd, sourceModel, &SchemeTreeModel::buildSchemes);
+    connect(this, &AskuWindow::elemsRecvd, sourceModel, &SchemeTreeModel::updateElems);
+    connect(this, &AskuWindow::ctrlParamsRecvd, sourceModel, &SchemeTreeModel::updateCtrlParams);
+    connect(this, &AskuWindow::moduleStatsRecvd, sourceModel, &SchemeTreeModel::updateModules);
+    connect(this, &AskuWindow::tuneParamsRecvd, sourceModel, &SchemeTreeModel::updateTuneParams);
 
     auto elemTreeView = new ElemTreeView(sourceModel, this);
 
@@ -26,6 +29,7 @@ AskuWindow::AskuWindow(QWidget* parent):
     auto tuneParamWidget = new TuneParamWidget(sourceModel, this);
     connect(elemTreeView, QOverload<const QModelIndex&>::of(&ElemTreeView::currentChanged),
             tuneParamWidget, &TuneParamWidget::currentChanged);
+    connect(tuneParamWidget, &TuneParamWidget::newValues, this, &AskuWindow::newTuneParamValues);
 
     auto elemListView = new ElemListView(sourceModel, this);
     connect(elemTreeView, QOverload<const QModelIndex&>::of(&ElemTreeView::currentChanged),

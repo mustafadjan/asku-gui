@@ -1,11 +1,12 @@
 #pragma once
 
 #include "AbstractSchemeTreeItem.h"
-#include <QMetaType>
+#include "AbstractValuableItem.h"
 
 class TuneParamTreeItemPrivate;
+class OneConfigParamValue;
 
-class TuneParamTreeItem : public AbstractSchemeTreeItem
+class TuneParamTreeItem : public AbstractSchemeTreeItem, public AbstractValuableItem
 {
     Q_DECLARE_PRIVATE_D(d, TuneParamTreeItem)
 
@@ -19,19 +20,23 @@ public:
     QVector<int> setData(const QVariant&) override;
     bool isValid(ModelType) const override;
 
-    void setType(QMetaType::Type);
     void setUnit(const QString&);
-    void setSaveStatus(bool);
+    void setSaveProp(bool);
     void setMin(float);
     void setMax(float);
-    void setValues(const QVector<QString>&);
+    void setValues(const QStringList&);
     void setDescription(const QString&);
-    void setDefault(const QVariant&);
     //void setUserClearance(some enum class or int);
 
+    bool isNewValue() const;
+    OneConfigParamValue packaging() const;
     QWidget* createEditor(QWidget*) const;
     QVariant editorData(QWidget*) const;
     void resetOuterData();
     //void updateOuterData();
+
+protected:
+
+    void setValueType(QMetaType::Type) override;
 
 };

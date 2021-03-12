@@ -50,11 +50,11 @@ HEADERS += $$PWD/AbstractConditionalItem.h\
            $$PWD/RlkTreeItem_p.h \
            $$PWD/SchemeBaseProxyModel.h \
            $$PWD/SchemeTreeModel.h \
-           $$PWD/StackedTuneParamValue.h \
            $$PWD/TuneParamItemDelegate.h \
            $$PWD/TuneParamTreeItem.h \
            $$PWD/TuneParamTreeItem_p.h \
            $$PWD/TuneParamTreeProxyModel.h \
            $$PWD/TuneParamTreeView.h \
            $$PWD/TuneParamWidget.h \
-           $$PWD/AskuWindow.h
+           $$PWD/AskuWindow.h \
+    $$PWD/AbstractValuableItem.h

@@ -9,6 +9,7 @@ TuneParamWidget::TuneParamWidget(QAbstractItemModel* sourceModel, QWidget* paren
     auto tuneParamTreeView = new TuneParamTreeView(sourceModel, this);
     connect(this, &TuneParamWidget::currentChanged,
             tuneParamTreeView, &TuneParamTreeView::setRootIndex);
+    connect(tuneParamTreeView, &TuneParamTreeView::newValues, this, &TuneParamWidget::newValues);
 
     auto pushButtonEditMode = new QPushButton(tr("Режим редактирования"), this);
     auto pushButtonApply = new QPushButton(tr("Применить"), this);
@@ -27,7 +28,9 @@ TuneParamWidget::TuneParamWidget(QAbstractItemModel* sourceModel, QWidget* paren
     connect(pushButtonApplySave, &QAbstractButton::clicked,
             pushButtonEditMode, &QAbstractButton::setChecked);
     connect(pushButtonApply, &QAbstractButton::clicked,
-            tuneParamTreeView, &TuneParamTreeView::sendChangedTP);
+            tuneParamTreeView, &TuneParamTreeView::sendNewValues);
+    connect(pushButtonApplySave, &QAbstractButton::clicked,
+            tuneParamTreeView, &TuneParamTreeView::sendNewValuesSaveProp);
     pushButtonEditMode->setCheckable(true);
     pushButtonApply->setEnabled(false);
     pushButtonApplySave->setEnabled(false);

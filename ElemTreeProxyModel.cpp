@@ -6,10 +6,6 @@ ElemTreeProxyModel::ElemTreeProxyModel(QAbstractItemModel* sourceModel, QObject*
 {
 }
 
-ElemTreeProxyModel::~ElemTreeProxyModel()
-{
-}
-
 QVariant ElemTreeProxyModel::data(const QModelIndex& index, int role) const
 {
     auto sourceIndex = mapToSource(index);

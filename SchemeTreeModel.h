@@ -5,6 +5,7 @@
 struct Pack0x24;
 struct ElemData;
 struct CtrlParamData;
+struct TuneParamData;
 class SchemeTreeModelPrivate;
 
 class SchemeTreeModel : public QAbstractItemModel
@@ -29,14 +30,14 @@ public slots:
     // 0xD001
     void buildSchemes(quint32, const QHash<quint32, QJsonValue>&);
     void updateRlk(quint32, const Pack0x24&) const;
-    void updateModule(quint32, const QHash<quint32, Pack0x24>&) const;
+    void updateModules(quint32, const QHash<quint32, Pack0x24>&) const;
     void updateElems(quint32, const QHash<quint32, QHash<quint16, ElemData>>&) const;
     void updateCtrlParams(quint32, const QHash<quint32, QHash<quint32, CtrlParamData>>&) const;
-    void updateTuneParams(quint32, const QHash<quint32, QHash<quint32, QVariant>>&) const;
+    void updateTuneParams(quint32, const QHash<quint32, QHash<quint32, TuneParamData>>&) const;
 
 private:
 
-    QScopedPointer<SchemeTreeModelPrivate> d;
+    SchemeTreeModelPrivate* const d;
 
 signals:
 

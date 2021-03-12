@@ -11,23 +11,18 @@ class AbstractElemTreeItem : public AbstractSchemeTreeItem, public AbstractCondi
 
 public:
 
-    enum class State : quint8
-    {
-        On = 0,
-        Off = 1,
-        TurnOn = 2,
-        TurnOff = 3
-    };
-
     int columnCount() const override;
     QVariant data(int) const override;
     QVariant roleData(int) const override;
     bool isValid(ModelType) const override;
 
+    quint32 rlkId() const { return rootItem()->id(); }
+    quint32 moduleId() const { return preRootItem()->id(); }
+
 protected:
 
     explicit AbstractElemTreeItem(AbstractElemTreeItemPrivate&);
 
-    ItemCondition condition() const override;
+    EModulState condition() const override;
 
 };

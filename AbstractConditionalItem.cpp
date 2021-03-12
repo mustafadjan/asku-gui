@@ -1,12 +1,14 @@
 #include "AbstractConditionalItem.h"
+#include <QMap>
+#include <QBrush>
 
-static const QMap<AbstractConditionalItem::ItemCondition, QBrush> conditionBrushes
+static const QMap<EModulState, QBrush> conditionBrushes
 {
-    {AbstractConditionalItem::ItemCondition::Unknown,   QBrush(Qt::lightGray)},
-    {AbstractConditionalItem::ItemCondition::Norm,      QBrush(Qt::transparent)},
-    {AbstractConditionalItem::ItemCondition::Warn,      QBrush(Qt::yellow)},
-    {AbstractConditionalItem::ItemCondition::Fail,      QBrush(Qt::red)},
-    {AbstractConditionalItem::ItemCondition::Uncontrol, QBrush(Qt::darkGray)},
+    {eStUnknown,   QBrush(Qt::lightGray)},
+    {eStNorma,     QBrush(Qt::transparent)},
+    {eStWarn,      QBrush(Qt::yellow)},
+    {eStError,     QBrush(Qt::red)},
+    {eStNoControl, QBrush(Qt::darkGray)},
 };
 
 QBrush AbstractConditionalItem::conditionBrush() const

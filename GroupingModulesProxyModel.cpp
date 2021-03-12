@@ -131,7 +131,8 @@ GroupingModulesProxyModel::GroupingModulesProxyModel(QAbstractItemModel* sourceM
 
 GroupingModulesProxyModel::~GroupingModulesProxyModel()
 {
-    qDeleteAll(d_func()->mappedIndexes.values());
+    qDeleteAll(d_func()->mappedIndexes);
+    delete d;
 }
 
 QModelIndex GroupingModulesProxyModel::mapToSource(const QModelIndex& proxyIndex) const

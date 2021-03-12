@@ -26,6 +26,6 @@ public:
 
 private:
 
-    QScopedPointer<GroupingModulesProxyModelPrivate> d;
+    GroupingModulesProxyModelPrivate* const d;
 
 };

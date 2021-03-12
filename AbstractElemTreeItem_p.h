@@ -11,7 +11,7 @@ class AbstractElemTreeItemPrivate : public AbstractSchemeTreeItemPrivate
 
 public:
 
-    ElemData data;
+    ElemData data{};
 
     explicit AbstractElemTreeItemPrivate(quint32, const QString&, AbstractElemTreeItem*);
 

@@ -1,5 +1,6 @@
 #include "TuneParamTreeProxyModel.h"
-#include "AbstractSchemeTreeItem.h"
+#include "TuneParamTreeItem.h"
+#include "VoiTypes.h"
 
 TuneParamTreeProxyModel::TuneParamTreeProxyModel(QAbstractItemModel* sourceModel, QObject* parent):
     SchemeBaseProxyModel(ModelType::TuneParamTree, sourceModel, parent)
@@ -18,9 +19,11 @@ QVariant TuneParamTreeProxyModel::data(const QModelIndex& index, int role) const
     if (sourceIndex.isValid()) {
         auto item = static_cast<AbstractSchemeTreeItem*>(sourceIndex.internalPointer());
 
+        int ty = item->data(sourceIndex.column()).userType();
+        auto name = item->data(0).toString();
         switch (role) {
             case Qt::DisplayRole:
-                return item->data(sourceIndex.column()).type() == QVariant::Bool ?
+                return item->data(sourceIndex.column()).userType() == QMetaType::Bool ?
                            QVariant() : item->data(sourceIndex.column());
             case Qt::ChangeTPRole:
                 if (sourceIndex.column() == 0) {
@@ -28,7 +31,8 @@ QVariant TuneParamTreeProxyModel::data(const QModelIndex& index, int role) const
                 }
                 break;
             case Qt::CheckStateRole:
-                if (item->data(sourceIndex.column()).type() == QVariant::Bool) {
+                if (item->data(sourceIndex.column()).userType() == QMetaType::Bool) {
+                    bool b = item->data(sourceIndex.column()).toBool();
                     return item->data(sourceIndex.column()).toBool() ?
                                Qt::Checked : Qt::Unchecked;
                 }
@@ -93,8 +97,31 @@ Qt::ItemFlags TuneParamTreeProxyModel::flags(const QModelIndex& index) const
     if (sourceIndex.isValid() && sourceIndex.column() == 2) {
         return flags | (static_cast<AbstractSchemeTreeItem*>(sourceIndex.internalPointer())->
                             data(sourceIndex.column()).type() == QVariant::Bool ?
-                            Qt::ItemIsUserCheckable : Qt::ItemIsEditable);
+                                 Qt::ItemIsUserCheckable : Qt::ItemIsEditable);
     }
 
     return flags;
+}
+
+QList<OneConfigParamValue> TuneParamTreeProxyModel::getNewValues(const QModelIndex& index) const
+{
+    QList<OneConfigParamValue> data;
+
+    int size = rowCount(index);
+    for (int i = 0; i < size; ++i) {
+        auto childIndex = this->index(i, 0, index);
+        if (hasChildren(childIndex)) { // группа НП
+            data.append(getNewValues(childIndex));
+        }
+        else {
+            auto item = static_cast<AbstractSchemeTreeItem*>(mapToSource(childIndex).
+                                                             internalPointer());
+            auto tuneParamItem = dynamic_cast<TuneParamTreeItem*>(item);
+            if (tuneParamItem && tuneParamItem->isNewValue()) {
+                data.append(tuneParamItem->packaging());
+            }
+        }
+    }
+
+    return data;
 }
