@@ -36,7 +36,10 @@ AbstractElemTreeItem::AbstractElemTreeItem(AbstractElemTreeItemPrivate& d):
 
 int AbstractElemTreeItem::columnCount() const
 {
-    return 5;
+    return 5; // т.к. детьми могут быть КП, а представление спрашивает количество столбцов именно у
+              // родительского индекса, можно было бы считать динамически (в зависимости от типа
+              // детей), но не имеет особого смысла, в нужных местах представления сами регулируют
+              // количество столбцов, а это просто "верхний порог"
 }
 
 QVariant AbstractElemTreeItem::data(int column) const
@@ -56,6 +59,7 @@ QVariant AbstractElemTreeItem::roleData(int role) const
             return conditionBrush();
         case Qt::StateRole:
             return stateImages[static_cast<EModulWork>(d_func()->data.state)];
+        // pixmap модуля/элемента с состоянием и признаками имитации и местн.
         case Qt::ElemFlagsRole:
             QFont font;
             font.setItalic(d_func()->data.imit);

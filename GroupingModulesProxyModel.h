@@ -15,8 +15,9 @@ public:
     explicit GroupingModulesProxyModel(QAbstractItemModel*, QObject* = nullptr);
     ~GroupingModulesProxyModel() override;
 
-    QModelIndex mapToSource(const QModelIndex&) const override;
-    QModelIndex mapFromSource(const QModelIndex&) const override;
+    // следующие два метода проксируют и депроксируют индексы
+    QModelIndex mapToSource(const QModelIndex&) const override; // прокси в исходный
+    QModelIndex mapFromSource(const QModelIndex&) const override; // исходный в прокси
     QModelIndex index(int, int, const QModelIndex& = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex&) const override;
     int rowCount(const QModelIndex& = QModelIndex()) const override;

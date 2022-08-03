@@ -19,6 +19,8 @@ public:
     explicit SchemeTreeModel(QObject* = nullptr);
     ~SchemeTreeModel() override;
 
+    // методы реализованы по примеру из Qt Help: Simple Tree Model Example
+    // выполняют роль контроллера из паттерна MVC
     QModelIndex index(int, int, const QModelIndex& = QModelIndex()) const override;
     QModelIndex parent(const QModelIndex&) const override;
     int rowCount(const QModelIndex& = QModelIndex()) const override;

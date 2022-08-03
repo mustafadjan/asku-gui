@@ -27,8 +27,13 @@ void ElemListView::setRootIndex(const QModelIndex& index)
         }
     }
 
+    // если для index'а нет соответствия в проксирующей модели, то mapFromSource возвращает
+    // инвалидный индекс, который является абстрактным корнем, прямыми потомками которого являются
+    // узлы 1-го уровня (RLKTreeItem), поэтому...
     QListView::setRootIndex(proxyModel->mapFromSource(index));
 
+    // ...прячутся строки, которые не являются модулями и элементами (на самом деле только РЛК)
+    // отфильтровать РЛК нельзя, т.к. они нужны как родители для модулей
     for (const auto row : proxyModel->rowsToHide({ItemType::Module,ItemType::Elem}, rootIndex())) {
         setRowHidden(row, true);
     }

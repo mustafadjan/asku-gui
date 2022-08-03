@@ -14,6 +14,7 @@ ElemTreeView::ElemTreeView(QAbstractItemModel* sourceModel, QWidget* parent):
     setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
     setSelectionMode(QAbstractItemView::NoSelection);
 
+    // connect'ы для варианта с группирующим прокси
     //connect(model(), &QAbstractItemModel::dataChanged, this, [this] (const QModelIndex& proxyIndex1,
     //        const QModelIndex& proxyIndex2, const QVector<int>& roles)
     //{
@@ -33,6 +34,7 @@ ElemTreeView::ElemTreeView(QAbstractItemModel* sourceModel, QWidget* parent):
     //});
 }
 
+// получение модели для варианта с группирующим прокси
 //QAbstractItemModel* ElemTreeView::model() const
 //{
 //    return qobject_cast<const QAbstractProxyModel*>(QTreeView::model())->sourceModel();
@@ -41,6 +43,10 @@ ElemTreeView::ElemTreeView(QAbstractItemModel* sourceModel, QWidget* parent):
 void ElemTreeView::drawRow(QPainter* painter, const QStyleOptionViewItem& options,
                            const QModelIndex& index) const
 {
+    // метод не доделан, попытка решить проблему с тем, что группирующие строки показываются
+    // "холодными", а такие они потому что неактивные для взаимодействия (только для
+    // сворачивания/разворачивания), актуально только с включенным группирующим прокси
+
     //qDebug() << __PRETTY_FUNCTION__ << i++ << QTreeView::model()->data(index)
     //         << ((options.state & QStyle::State_Enabled) != 0);
     QTreeView::drawRow(painter, options, index);
@@ -60,6 +66,7 @@ void ElemTreeView::currentChanged(const QModelIndex& current, const QModelIndex&
         auto proxyModel = qobject_cast<const QAbstractProxyModel*>(QTreeView::model());
         auto proxyIndex = proxyModel->mapToSource(current);
 
+        // emit для варианта с группирующим прокси
         //qDebug() << __PRETTY_FUNCTION__ << current << proxyIndex;
         //emit currentChanged(qobject_cast<const QAbstractProxyModel*>(proxyModel->sourceModel())->
         //                    mapToSource(proxyIndex));

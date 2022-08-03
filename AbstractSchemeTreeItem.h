@@ -3,6 +3,7 @@
 #include <QMetaType>
 
 namespace Qt {
+    // собственные роли
     enum // ItemDataRole
     {
         ConditionRole = BackgroundRole,
@@ -23,7 +24,7 @@ namespace Qt {
         ElemFlagsRole
     };
 }
-
+// тип представления
 enum class ModelType : quint8
 {
     SourceTree,
@@ -32,7 +33,7 @@ enum class ModelType : quint8
     TuneParamTree,
     ElemList
 };
-
+// тип узла
 enum class ItemType : quint8
 {
     RLK,
@@ -44,7 +45,9 @@ enum class ItemType : quint8
 Q_DECLARE_METATYPE(ItemType)
 
 class AbstractSchemeTreeItemPrivate;
-
+/**
+ * @brief Базовый абстрактный класс для всех узлов
+ */
 class AbstractSchemeTreeItem
 {
     Q_DECLARE_PRIVATE_D(d, AbstractSchemeTreeItem)
@@ -65,11 +68,16 @@ public:
     void setName(const QString&);
     void removeChilds();
 
+    // ролевые данные (полный путь, id, состояние/статус и т.д.)
     virtual QVariant roleData(int) const;
 
+    // количество столбцов, которые возможно показать в представлении
     virtual int columnCount() const = 0;
+    // данные для отображения в столбце представления (имя, значение, время и т.д.)
     virtual QVariant data(int) const = 0;
+    // признак валидности для конкретного представления
     virtual bool isValid(ModelType) const = 0;
+    // установка новых данных, возвращает роли, данные по которым были изменены
     virtual QVector<int> setData(const QVariant&) = 0;
 
 protected:

@@ -59,7 +59,7 @@ AbstractSchemeTreeItem* AbstractSchemeTreeItem::rootItem() const
 
 AbstractSchemeTreeItem* AbstractSchemeTreeItem::preRootItem() const
 {
-    if (!parentItem()) {
+    if (!parentItem()) { // item уже root
         return nullptr;
     }
     auto rootItem = const_cast<AbstractSchemeTreeItem*>(this);

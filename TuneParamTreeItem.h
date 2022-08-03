@@ -26,10 +26,12 @@ public:
     void setMax(float);
     void setValues(const QStringList&);
     void setDescription(const QString&);
-    //void setUserClearance(some enum class or int);
+    //void setUserClearance(some enum class or int); // установка уровня доступа оператора
 
     bool isNewValue() const;
+    // упаковка пользовательского значения
     OneConfigParamValue packaging() const;
+    // следующие два метода нужны для делегата, создает виджеты и выдает их значения
     QWidget* createEditor(QWidget*) const;
     QVariant editorData(QWidget*) const;
     void resetOuterData();

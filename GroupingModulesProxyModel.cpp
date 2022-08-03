@@ -35,7 +35,8 @@ class GroupingModulesProxyModelPrivate
     const QVector<int>& findSourceRows(const QModelIndex&) const;
 };
 
-GroupingModulesProxyModelPrivate::MappingIt GroupingModulesProxyModelPrivate::createMapping(const QModelIndex& parent) const
+GroupingModulesProxyModelPrivate::MappingIt
+GroupingModulesProxyModelPrivate::createMapping(const QModelIndex& parent) const
 {
     auto it = mappedIndexes.constFind(parent);
     if (it == mappedIndexes.constEnd()) {
@@ -46,7 +47,9 @@ GroupingModulesProxyModelPrivate::MappingIt GroupingModulesProxyModelPrivate::cr
     return it;
 }
 
-GroupingModulesProxyModelPrivate::MappingIt GroupingModulesProxyModelPrivate::createMapping(const QModelIndex& proxyParent, EIdUser moduleType) const
+GroupingModulesProxyModelPrivate::MappingIt
+GroupingModulesProxyModelPrivate::createMapping(const QModelIndex& proxyParent, EIdUser moduleType)
+const
 {
     if (proxyParent.isValid()) {
         auto groupedModulesIt = sourceRows.constFind(indexToIterator(proxyParent).key());
@@ -59,13 +62,15 @@ GroupingModulesProxyModelPrivate::MappingIt GroupingModulesProxyModelPrivate::cr
     return mappedIndexes.constEnd();
 }
 
-GroupingModulesProxyModelPrivate::MappingIt GroupingModulesProxyModelPrivate::indexToIterator(const QModelIndex& proxyIndex) const
+GroupingModulesProxyModelPrivate::MappingIt
+GroupingModulesProxyModelPrivate::indexToIterator(const QModelIndex& proxyIndex) const
 {
     Q_ASSERT_X(proxyIndex.model() == q_func(), __PRETTY_FUNCTION__, "index from wrong model");
     return static_cast<const Mapping*>(proxyIndex.internalPointer())->it;
 }
 
-GroupingModulesProxyModelPrivate::SourceRowsIt GroupingModulesProxyModelPrivate::findSourceRowsIt(const QModelIndex& proxyIndex) const
+GroupingModulesProxyModelPrivate::SourceRowsIt
+GroupingModulesProxyModelPrivate::findSourceRowsIt(const QModelIndex& proxyIndex) const
 {
     if (proxyIndex.isValid()) {
         auto index = proxyIndex;
@@ -91,7 +96,8 @@ EIdUser GroupingModulesProxyModelPrivate::findModuleType(const QModelIndex& prox
     return it.key();
 }
 
-const QVector<int>& GroupingModulesProxyModelPrivate::findSourceRows(const QModelIndex& proxyIndex) const
+const QVector<int>& GroupingModulesProxyModelPrivate::findSourceRows(const QModelIndex& proxyIndex)
+const
 {
     auto it = findSourceRowsIt(proxyIndex);
     Q_ASSERT_X(it != SourceRowsIt(), __PRETTY_FUNCTION__, "wrong index");

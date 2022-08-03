@@ -32,5 +32,6 @@ bool SchemeBaseProxyModel::filterAcceptsRow(int sourceRow, const QModelIndex& so
 {
     auto index = sourceModel()->index(sourceRow, 0, sourceParent);
     auto item = static_cast<AbstractSchemeTreeItem*>(index.internalPointer());
+    // узел сообщает подходит ли он для конкретного проксирования
     return item->isValid(modelType);
 }

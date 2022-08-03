@@ -50,7 +50,9 @@ QVector<int> CtrlParamTreeItem::setData(const QVariant& data)
 {
     if (data.canConvert<CtrlParamData>()) {
         auto inData = data.value<CtrlParamData>();
+        // подразумевается, что значение КП приходит в "сыром" виде (QByteArray)...
         auto rawValue = inData.value.toByteArray();
+        // ...поэтому нормализуем значение в соответствии с уже имеющимся типом
         switch (d_func()->data.value.userType()) {
             case QMetaType::Float:
                 inData.value = *reinterpret_cast<const float*>(rawValue.constData());

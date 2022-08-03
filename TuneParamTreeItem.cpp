@@ -46,7 +46,9 @@ QVector<int> TuneParamTreeItem::setData(const QVariant& data)
 {
     if (data.canConvert<TuneParamData>()) { // установка нового значения по сообщению
         auto inData = data.value<TuneParamData>();
+        // подразумевается, что значение НП приходит в "сыром" виде (QByteArray)...
         auto rawValue = inData.value.toByteArray();
+        // ...поэтому нормализуем значение в соответствии с уже имеющимся типом
         switch (d_func()->data.value.userType()) {
             case QMetaType::Float:
                 inData.value = *reinterpret_cast<const float*>(rawValue.constData());
@@ -125,7 +127,8 @@ bool TuneParamTreeItem::isNewValue() const
 
 OneConfigParamValue TuneParamTreeItem::packaging() const
 {
-    // заполнение value в денормализованном виде (как прием в setData)
+    // заполнение value в денормализованном виде (как прием в setData),
+    // чтобы отправка была в таком же формате как и прием
     switch (d_func()->outerValue.userType()) {
         case QMetaType::Float:
         {

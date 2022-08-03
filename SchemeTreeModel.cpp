@@ -23,6 +23,7 @@ class SchemeTreeModelPrivate
 
     QTimer* fakeTimer{nullptr}, *fakeTimerRlkModule{nullptr}; // todo: delete later
 
+    // эта структура служит для быстрого поиска нужного item-a по id
     struct RLKMappedItem
     {
         struct ModuleMappedItem
@@ -100,6 +101,8 @@ class SchemeTreeModelPrivate
         //});
         //fakeTimer->start(10000);
     }
+
+    ~SchemeTreeModelPrivate();
 
     void setupModelData() // todo: delete later
     {
@@ -233,9 +236,12 @@ class SchemeTreeModelPrivate
     QHash<quint32, RLKMappedItem>::iterator insertRlk(quint32);
     QHash<quint32, ModuleMappedItem>::iterator insertModule(quint32, RLKMappedItem&);
 
+    // шаблонный метод приема QJsonValue, нужен для того если QJsonValue окажется QJsonObject или
+    // массивом QJsonObject, последним параметром передается callback на один из 3 следующих методов
     template<typename T1, typename T2>
     void recvValue(const QJsonValue&, T1&, T2*,
                    void (SchemeTreeModelPrivate::*)(const QJsonObject&, T1&, T2*));
+    // прием элементов, КП и НП, используются при построении схемы
     void recvElem(const QJsonObject&, ModuleMappedItem&, AbstractElemTreeItem*);
     void recvCtrlParam(const QJsonObject&, QHash<quint32, CtrlParamTreeItem*>&,
                        AbstractSchemeTreeItem*);
@@ -243,6 +249,11 @@ class SchemeTreeModelPrivate
                        AbstractSchemeTreeItem*);
 
 };
+
+SchemeTreeModelPrivate::~SchemeTreeModelPrivate()
+{
+    qDeleteAll(rlkItems);
+}
 
 template <typename T>
 void SchemeTreeModelPrivate::updateItemData(AbstractSchemeTreeItem* item, const T& data) const
@@ -428,14 +439,14 @@ SchemeTreeModel::SchemeTreeModel(QObject* parent):
     QAbstractItemModel(parent),
     d(new SchemeTreeModelPrivate(this))
 {
-    //d_func()->q_ptr = this; // todo: uncomment after deletion of debug methods (in private class)
+    //d_func()->q_ptr = this; // todo: uncomment after deletion debug methods (in private class)
 
+    // const сигнал для возможности вызова из const методов
     connect(this, &SchemeTreeModel::constDataChanged, this, &QAbstractItemModel::dataChanged);
 }
 
 SchemeTreeModel::~SchemeTreeModel()
 {
-    // todo: delete items by one of two ways (containers)
     delete d;
 }
 
@@ -497,10 +508,17 @@ QVariant SchemeTreeModel::data(const QModelIndex& index, int role) const
         auto item = d_func()->item(index);
         switch (role) {
             case Qt::DisplayRole:
+                // возвращает данные, которые отображаются непосредственно в дереве/таблице
+                // (по колонке)
                 return item->data(index.column());
             case Qt::FullPathRole:
             case Qt::IDRole:
             case Qt::IsModuleRole:
+                // возвращает специфические данные, нужно для легкого доступа вне модели
+                // (по роли)
+                // например для строки истории и полного пути (PathCompleter) нужен полный путь
+                // каждого индекса, подставляя в метод SchemeTreeModel::data сам индекс и роль,
+                // по которой нужно получить данные, возвращается строка полного пути
                 return item->roleData(role);
         }
     }
